@@ -35,7 +35,7 @@ fn seed_amount_little() {
             start_at: 0,
             reward_per_session: to_yocto("1000000000").into(),
             session_interval: 60,
-        }, None),
+        }, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -177,7 +177,7 @@ fn seed_amount_huge() {
             start_at: 0,
             reward_per_session: U128(single_reward),
             session_interval: 60,
-        }, None),
+        }, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
