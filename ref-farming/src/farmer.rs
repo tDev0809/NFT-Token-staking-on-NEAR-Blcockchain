@@ -91,7 +91,7 @@ impl Farmer {
     }
 
     pub fn set_seed_after_multiplier(&mut self, seed_id: &SeedId, amount: Balance) {
-        self.seeds.insert(
+        self.seeds_after_multiplier.insert(
             seed_id.clone(),
             amount
         );

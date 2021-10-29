@@ -295,7 +295,7 @@ impl Contract {
         let mut farmer = self.get_farmer(sender_id);
         farmer.get_ref_mut().add_seed(&seed_id, amount);
 
-        let amount_before_multiplier: u128 = *farmer.get_ref().seeds_after_multiplier.get(seed_id).unwrap_or(&0u128);
+        let amount_before_multiplier: u128 = farmer.get_ref().seeds_after_multiplier.get(seed_id).unwrap_or(&0u128).clone();
         let amount_after_multiplier: u128 = self.calculate_amount_after_multiplier(
             &farm_seed.get_ref().nft_multiplier,
             farmer.get_ref().nft_seeds.get(seed_id.as_str()),
@@ -333,9 +333,10 @@ impl Contract {
             farmer.get_ref().nft_seeds.get(seed_id.as_str()),
             farmer.get_ref().seeds.get(seed_id.as_str())
         );
+        farmer.get_ref_mut().set_seed_after_multiplier(&seed_id, amount_after_multiplier);
 
         farm_seed.get_ref_mut().sub_amount(amount_before_multiplier);
-        let _seed_remain = farm_seed.get_ref_mut().sub_amount(amount_after_multiplier);
+        let _seed_remain = farm_seed.get_ref_mut().add_amount(amount_after_multiplier);
 
         if farmer_seed_remain == 0 {
             // remove farmer rps of relative farm
@@ -409,7 +410,7 @@ impl Contract {
 
         farmer.get_ref_mut().set_seed_after_multiplier(&seed_id, amount_after_multiplier);
         farm_seed.get_ref_mut().sub_amount(amount_before_multiplier);
-        let _seed_remain = farm_seed.get_ref_mut().sub_amount(amount_after_multiplier);
+        let _seed_remain = farm_seed.get_ref_mut().add_amount(amount_after_multiplier);
 
         self.data_mut().farmers.insert(sender_id, &farmer);
         self.data_mut().seeds.insert(seed_id, &farm_seed);
@@ -423,22 +424,23 @@ impl Contract {
         ft_seed_balance: Option<&Balance>,
     ) -> u128 {
         if nft_multiplier.is_none() {
-            return *ft_seed_balance.unwrap()
+            return *ft_seed_balance.unwrap_or(&0u128)
         }
         // split x.paras.near@1:1
         // to "x.paras.near@1", ":1"
         let mut multiplier: u128 = 0;
         if let Some(nft_multiplier) = nft_multiplier {
-            nft_seeds
-                .unwrap()
-                .iter()
-                .for_each(
-                    |x: ContractNFTTokenId| {
-                        let contract_token_series_id_split: Vec<&str> = x.split(':').collect();
-                        let multiply = *nft_multiplier.get(&contract_token_series_id_split[0].to_string()).unwrap_or(&0);
-                        multiplier += multiply as u128;
-                    }
-                );
+            if let Some(nft_seeds) = nft_seeds {
+                nft_seeds
+                    .iter()
+                    .for_each(
+                        |x: ContractNFTTokenId| {
+                            let contract_token_series_id_split: Vec<&str> = x.split(':').collect();
+                            let multiply = *nft_multiplier.get(&contract_token_series_id_split[0].to_string()).unwrap_or(&0);
+                            multiplier += multiply as u128;
+                        }
+                    );
+            }
         }
 
 
