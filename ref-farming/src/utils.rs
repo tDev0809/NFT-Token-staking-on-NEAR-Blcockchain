@@ -11,6 +11,7 @@ pub const MIN_SEED_DEPOSIT: u128 = 1_000_000_000_000_000_000;
 pub const MAX_ACCOUNT_LENGTH: u128 = 64;
 /// Amount of gas for fungible token transfers.
 pub const GAS_FOR_FT_TRANSFER: Gas = 10_000_000_000_000;
+pub const GAS_FOR_NFT_TRANSFER: Gas = 20_000_000_000_000;
 /// hotfix_insuffient_gas_for_mft_resolve_transfer, increase from 5T to 20T
 pub const GAS_FOR_RESOLVE_TRANSFER: Gas = 20_000_000_000_000;
 pub const MFT_TAG: &str = "@";
@@ -31,6 +32,17 @@ pub trait FungibleToken {
 #[ext_contract(ext_multi_fungible_token)]
 pub trait MultiFungibleToken {
     fn mft_transfer(&mut self, token_id: String, receiver_id: AccountId, amount: U128, memo: Option<String>);
+}
+
+#[ext_contract(ext_non_fungible_token)]
+pub trait NonFungibleToken {
+    fn nft_transfer(
+        &mut self,
+        receiver_id: String,
+        token_id: String,
+        approval_id: Option<u64>,
+        memo: Option<String>,
+    );
 }
 
 #[ext_contract(ext_self)]
@@ -54,6 +66,14 @@ pub trait TokenPostActions {
         seed_id: SeedId,
         sender_id: AccountId,
         amount: U128,
+    );
+
+    fn callback_post_withdraw_nft(
+        &mut self,
+        seed_id: SeedId,
+        sender_id: AccountId,
+        nft_contract_id: String,
+        nft_token_id: String
     );
 }
 

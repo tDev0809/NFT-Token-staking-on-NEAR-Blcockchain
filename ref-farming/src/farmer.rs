@@ -10,10 +10,14 @@ use near_sdk::collections::LookupMap;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::{env, AccountId, Balance};
 use crate::{SeedId, FarmId, RPS};
+use crate::simple_farm::{ContractNFTTokenId, NFTTokenId};
 use crate::errors::*;
 use crate::utils::MAX_ACCOUNT_LENGTH;
 use crate::StorageKeys;
-/// each entry cost MAX_ACCOUNT_LENGTH bytes, 
+
+use near_sdk::collections::UnorderedSet;
+
+/// each entry cost MAX_ACCOUNT_LENGTH bytes,
 /// amount: Balance cost 16 bytes
 /// each empty hashmap cost 4 bytes
 pub const MIN_FARMER_LENGTH: u128 = MAX_ACCOUNT_LENGTH + 16 + 4 * 3;
@@ -29,9 +33,11 @@ pub struct Farmer {
     pub rewards: HashMap<AccountId, Balance>,
     /// Amounts of various seed tokens the farmer staked.
     pub seeds: HashMap<SeedId, Balance>,
+    pub seeds_after_multiplier: HashMap<SeedId, Balance>,
     /// record user_last_rps of farms
     pub user_rps: LookupMap<FarmId, RPS>,
     pub rps_count: u32,
+    pub nft_seeds: HashMap<SeedId, UnorderedSet<ContractNFTTokenId>>
 }
 
 impl Farmer {
@@ -84,6 +90,13 @@ impl Farmer {
         cur_balance
     }
 
+    pub fn set_seed_after_multiplier(&mut self, seed_id: &SeedId, amount: Balance) {
+        self.seeds.insert(
+            seed_id.clone(),
+            amount
+        );
+    }
+
     pub fn get_rps(&self, farm_id: &FarmId) -> RPS {
         self.user_rps.get(farm_id).unwrap_or(RPS::default()).clone()
     }
@@ -112,6 +125,34 @@ impl Farmer {
         )
         * env::storage_byte_cost()
     }
+
+    pub fn add_nft(&mut self, seed_id: &SeedId, nft_contract_id: &String, nft_token_id: &NFTTokenId) {
+        let contract_nft_token_id = format!("{}::{}", nft_contract_id, nft_token_id);
+        if let Some(nft_contract_seed) = self.nft_seeds.get_mut(seed_id) {
+            nft_contract_seed.insert(&contract_nft_token_id);
+        } else {
+            let mut new_nft_contract_seeds = UnorderedSet::new(StorageKeys::AccountNFTContractId {
+                account_nft_contract_id: nft_contract_id.clone()
+            });
+            new_nft_contract_seeds.insert(&contract_nft_token_id);
+            self.nft_seeds.insert(nft_contract_id.clone(), new_nft_contract_seeds);
+        }
+    }
+
+    pub fn sub_nft(&mut self, seed_id: &SeedId, nft_contract_id: &String, nft_token_id: &NFTTokenId) -> Option<String> {
+        let contract_nft_token_id = format!("{}::{}", nft_contract_id, nft_token_id);
+        let mut nft_token_id_exist: bool = false;
+        if let Some(nft_contract_seed) = self.nft_seeds.get_mut(seed_id) {
+            nft_token_id_exist = nft_contract_seed.remove(&contract_nft_token_id);
+        }
+        if nft_token_id_exist {
+            Some(nft_token_id.clone())
+        } else {
+            None
+        }
+    }
+
+
 }
 
 
@@ -135,6 +176,8 @@ impl VersionedFarmer {
                 account_id: farmer_id.clone(),
             }),
             rps_count: 0,
+            nft_seeds: HashMap::new(),
+            seeds_after_multiplier: HashMap::new()
         })
     }
 

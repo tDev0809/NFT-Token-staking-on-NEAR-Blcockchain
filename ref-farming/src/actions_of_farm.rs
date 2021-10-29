@@ -5,21 +5,26 @@ use simple_farm::{SimpleFarm, HRSimpleFarmTerms};
 use crate::utils::{gen_farm_id, MIN_SEED_DEPOSIT, parse_farm_id};
 use crate::errors::*;
 use crate::*;
+use std::collections::HashMap;
 
 
 #[near_bindgen]
 impl Contract {
     /// create farm and pay for its storage fee
     #[payable]
-    pub fn create_simple_farm(&mut self, terms: HRSimpleFarmTerms, min_deposit: Option<U128>) -> FarmId {
-
+    pub fn create_simple_farm(
+        &mut self,
+          terms: HRSimpleFarmTerms,
+          min_deposit: Option<U128>,
+          nft_multiplier: Option<HashMap<String, u32>>
+    ) -> FarmId {
         self.assert_owner();
         
         let prev_storage = env::storage_usage();
 
         let min_deposit: u128 = min_deposit.unwrap_or(U128(MIN_SEED_DEPOSIT)).0;
 
-        let farm_id = self.internal_add_farm(&terms, min_deposit);
+        let farm_id = self.internal_add_farm(&terms, min_deposit, nft_multiplier);
 
         // Check how much storage cost and refund the left over back.
         let storage_needed = env::storage_usage() - prev_storage;
@@ -42,7 +47,12 @@ impl Contract {
     /// Adds given farm to the vec and returns it's id.
     /// If there is not enough attached balance to cover storage, fails.
     /// If too much attached - refunds it back.
-    fn internal_add_farm(&mut self, terms: &HRSimpleFarmTerms, min_deposit: Balance) -> FarmId {
+    fn internal_add_farm(
+        &mut self,
+        terms: &HRSimpleFarmTerms,
+        min_deposit: Balance,
+        nft_multiplier: Option<HashMap<String, u32>>
+    ) -> FarmId {
         
         // let mut farm_seed = self.get_seed_default(&terms.seed_id, min_deposit);
         let mut farm_seed: VersionedFarmSeed;
@@ -56,7 +66,7 @@ impl Contract {
                 .as_bytes(),
             );
         } else {
-            farm_seed = VersionedFarmSeed::new(&terms.seed_id, min_deposit);
+            farm_seed = VersionedFarmSeed::new(&terms.seed_id, min_deposit, nft_multiplier);
             env::log(
                 format!(
                     "The first farm created In seed {}, with min_deposit {}",

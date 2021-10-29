@@ -5,8 +5,9 @@ use near_sdk::json_types::{U128};
 use crate::utils::MFT_TAG;
 use crate::farm_seed::SeedType;
 
-
 use near_contract_standards::fungible_token::receiver::FungibleTokenReceiver;
+
+pub type TokenId = String;
 
 #[near_bindgen]
 impl FungibleTokenReceiver for Contract {
@@ -94,6 +95,8 @@ pub trait MFTTokenReceiver {
     ) -> PromiseOrValue<U128>;
 }
 
+
+
 enum TokenOrPool {
     Token(AccountId),
     Pool(u64),
@@ -173,4 +176,55 @@ impl MFTTokenReceiver for Contract {
 
         PromiseOrValue::Value(U128(0))
     }
+
 }
+
+// Receiving NFTs
+
+pub trait NonFungibleTokenApprovalsReceiver {
+    fn nft_on_approve(
+        &mut self,
+        token_id: TokenId,
+        owner_id: ValidAccountId,
+        approval_id: u64,
+        msg: String,
+    );
+}
+
+#[near_bindgen]
+impl NonFungibleTokenApprovalsReceiver for Contract {
+    fn nft_on_approve(
+        &mut self,
+        token_id: TokenId,
+        owner_id: ValidAccountId,
+        approval_id: u64,
+        msg: String
+    ) {
+
+        let nft_contract_id = env::predecessor_account_id();
+        let signer_id = env::signer_account_id();
+
+        assert_ne!(
+            nft_contract_id,
+            signer_id,
+            "Paras(farming): nft_on_approve should only be called via cross-contract call"
+        );
+
+        assert_eq!(
+            owner_id.as_ref(),
+            &signer_id,
+            "Paras(farming): owner_id should be signer_id"
+        );
+
+        // check seed exists
+        self.get_seed(&msg);
+
+        self.internal_nft_deposit(
+            &msg,
+            &owner_id.to_string(),
+            &token_id,
+            &nft_contract_id
+        );
+    }
+}
+

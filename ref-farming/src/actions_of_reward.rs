@@ -124,7 +124,7 @@ fn claim_user_reward_from_farm(
     total_seeds: &Balance,
     silent: bool,
 ) {
-    let user_seeds = farmer.seeds.get(&farm.get_seed_id()).unwrap_or(&0_u128);
+    let user_seeds = farmer.seeds_after_multiplier.get(&farm.get_seed_id()).unwrap_or(&0_u128);
     let user_rps = farmer.get_rps(&farm.get_farm_id());
     let (new_user_rps, reward_amount) = farm.claim_user_reward(&user_rps, user_seeds, total_seeds, silent);
     if !silent {

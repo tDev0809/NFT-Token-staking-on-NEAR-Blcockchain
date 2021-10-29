@@ -21,6 +21,9 @@ construct_uint! {
     pub struct U256(4);
 }
 
+pub type ContractNFTTokenId = String;
+pub type NFTTokenId = String;
+
 pub type RPS = [u8; 32];
 
 // to ensure precision, all reward_per_seed would be multiplied by this DENOM
@@ -49,7 +52,7 @@ pub struct HRSimpleFarmTerms {
     pub reward_token: ValidAccountId,
     pub start_at: u32,
     pub reward_per_session: U128,
-    pub session_interval: u32, 
+    pub session_interval: u32,
 }
 
 impl From<&HRSimpleFarmTerms> for SimpleFarmTerms {

@@ -217,7 +217,7 @@ impl Contract {
             if let Some(farm) = self.data().farms.get(&farm_id) {
                 let reward_amount = farm.view_farmer_unclaimed_reward(
                     &farmer.get_ref().get_rps(&farm.get_farm_id()),
-                    farmer.get_ref().seeds.get(&seed_id).unwrap_or(&0_u128),
+                    farmer.get_ref().seeds_after_multiplier.get(&seed_id).unwrap_or(&0_u128),
                     &farm_seed.get_ref().amount,
                 );
                 reward_amount.into()
@@ -259,6 +259,19 @@ impl Contract {
         }
     }
 
+    pub fn list_user_seeds_after_multiplier(&self, account_id: ValidAccountId) -> HashMap<SeedId, U128> {
+        if let Some(farmer) = self.get_farmer_wrapped(account_id.as_ref()) {
+            farmer
+                .get()
+                .seeds_after_multiplier
+                .into_iter()
+                .map(|(seed, bal)| (seed.clone(), U128(bal)))
+                .collect()
+        } else {
+            HashMap::new()
+        }
+    }
+
     pub fn get_seed_info(&self, seed_id: SeedId) -> Option<SeedInfo> {
         if let Some(farm_seed) = self.get_seed_wrapped(&seed_id) {
             Some(farm_seed.get_ref().into())
@@ -287,4 +300,6 @@ impl Contract {
             String::from("0")
         }
     }
+
+
 }

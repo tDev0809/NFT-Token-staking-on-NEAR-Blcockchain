@@ -9,6 +9,7 @@ use near_sdk::json_types::{U128};
 use crate::errors::*;
 use crate::farm::FarmId;
 use crate::utils::parse_seed_id;
+use std::collections::HashMap;
 
 
 /// For MFT, SeedId composes of token_contract_id 
@@ -21,7 +22,6 @@ pub enum SeedType {
     FT,
     MFT,
 }
-
 
 #[derive(BorshSerialize, BorshDeserialize)]
 #[cfg_attr(feature = "test", derive(Clone))]
@@ -37,10 +37,11 @@ pub struct FarmSeed {
     /// total (staked) balance of this seed (Farming Token)
     pub amount: Balance,
     pub min_deposit: Balance,
+    pub nft_multiplier: Option<HashMap<String, u32>>
 }
 
 impl FarmSeed {
-    pub fn new(seed_id: &SeedId, min_deposit: Balance) -> Self {
+    pub fn new(seed_id: &SeedId, min_deposit: Balance, nft_multiplier: Option<HashMap<String, u32>>) -> Self {
         let (token_id, token_index) = parse_seed_id(seed_id);
         let seed_type: SeedType;
         if token_id == token_index {
@@ -55,6 +56,7 @@ impl FarmSeed {
             next_index: 0,
             amount: 0,
             min_deposit,
+            nft_multiplier
         }
     }
 
@@ -82,8 +84,8 @@ pub enum VersionedFarmSeed {
 
 impl VersionedFarmSeed {
 
-    pub fn new(seed_id: &SeedId, min_deposit: Balance) -> Self {
-        VersionedFarmSeed::V101(FarmSeed::new(seed_id, min_deposit))
+    pub fn new(seed_id: &SeedId, min_deposit: Balance, nft_multiplier: Option<HashMap<String, u32>>) -> Self {
+        VersionedFarmSeed::V101(FarmSeed::new(seed_id, min_deposit, nft_multiplier))
     }
 
     /// Upgrades from other versions to the currently used version.
@@ -131,6 +133,7 @@ pub struct SeedInfo {
     pub next_index: u32,
     pub amount: U128,
     pub min_deposit: U128,
+    pub nft_multiplier: Option<HashMap<String, u32>>
 }
 
 impl From<&FarmSeed> for SeedInfo {
@@ -147,6 +150,7 @@ impl From<&FarmSeed> for SeedInfo {
             amount: fs.amount.into(),
             min_deposit: fs.min_deposit.into(),
             farms: fs.farms.iter().map(|key| key.clone()).collect(),
+            nft_multiplier: fs.nft_multiplier.clone()
         }
     }
 }

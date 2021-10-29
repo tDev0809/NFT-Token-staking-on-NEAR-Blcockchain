@@ -46,6 +46,7 @@ pub enum StorageKeys {
     Farmer,
     RewardInfo,
     UserRps { account_id: AccountId },
+    AccountNFTContractId { account_nft_contract_id: String }
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
@@ -157,6 +158,7 @@ mod tests {
             start_at: 0,
             reward_per_session: U128(session_amount),
             session_interval: session_interval,
+            nft_multiplier: None
         }, Some(U128(10)))
     }
 
