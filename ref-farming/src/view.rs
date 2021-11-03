@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use near_sdk::json_types::{ValidAccountId, U128, U64};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{near_bindgen, AccountId};
+use near_sdk::collections::UnorderedSet;
 
 use crate::farm_seed::SeedInfo;
 use crate::utils::parse_farm_id;
@@ -253,6 +254,19 @@ impl Contract {
                 .seeds
                 .into_iter()
                 .map(|(seed, bal)| (seed.clone(), U128(bal)))
+                .collect()
+        } else {
+            HashMap::new()
+        }
+    }
+
+    pub fn list_user_nft_seeds(&self, account_id: ValidAccountId) -> HashMap<SeedId, Vec<String>> {
+        if let Some(farmer) = self.get_farmer_wrapped(account_id.as_ref()) {
+            farmer
+                .get()
+                .nft_seeds
+                .into_iter()
+                .map(|(seed, nft_contract_nft_token_id_set)| (seed.clone(), nft_contract_nft_token_id_set.to_vec()))
                 .collect()
         } else {
             HashMap::new()

@@ -142,6 +142,34 @@ pub(crate) fn show_userseeds(
 }
 
 #[allow(dead_code)]
+pub(crate) fn show_userseeds_after_multiplier(
+    farming: &ContractAccount<Farming>,
+    user_id: String,
+    show_print: bool,
+) -> HashMap<String, U128> {
+    let ret = view!(farming.list_user_seeds_after_multiplier(to_va(user_id.clone())))
+        .unwrap_json::<HashMap<String, U128>>();
+    if show_print {
+        println!("User Seeds for {}: {:#?}", user_id, ret);
+    }
+    ret
+}
+
+#[allow(dead_code)]
+pub(crate) fn show_usernftseeds(
+    farming: &ContractAccount<Farming>,
+    user_id: String,
+    show_print: bool,
+) -> HashMap<String, Vec<String>> {
+    let ret = view!(farming.list_user_nft_seeds(to_va(user_id.clone())))
+        .unwrap_json::<HashMap<String, Vec<String>>>();
+    if show_print {
+        println!("User NFT Seeds for {}: {:#?}", user_id, ret);
+    }
+    ret
+}
+
+#[allow(dead_code)]
 pub(crate) fn show_unclaim(
     farming: &ContractAccount<Farming>,
     user_id: String,

@@ -6,6 +6,7 @@ use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::PromiseOrValue;
 
+use near_contract_standards::non_fungible_token::core::NonFungibleTokenReceiver;
 use near_contract_standards::fungible_token::receiver::FungibleTokenReceiver;
 
 pub type TokenId = String;
@@ -239,26 +240,15 @@ impl MFTTokenReceiver for Contract {
 }
 
 // Receiving NFTs
-
-pub trait NonFungibleTokenApprovalsReceiver {
-    fn nft_on_approve(
-        &mut self,
-        token_id: TokenId,
-        owner_id: ValidAccountId,
-        approval_id: u64,
-        msg: String,
-    );
-}
-
 #[near_bindgen]
-impl NonFungibleTokenApprovalsReceiver for Contract {
-    fn nft_on_approve(
+impl NonFungibleTokenReceiver for Contract {
+    fn nft_on_transfer(
         &mut self,
+        sender_id: AccountId,
+        previous_owner_id: AccountId,
         token_id: TokenId,
-        owner_id: ValidAccountId,
-        approval_id: u64,
         msg: String,
-    ) {
+    ) -> PromiseOrValue<bool> {
         let nft_contract_id = env::predecessor_account_id();
         let signer_id = env::signer_account_id();
 
@@ -268,14 +258,15 @@ impl NonFungibleTokenApprovalsReceiver for Contract {
         );
 
         assert_eq!(
-            owner_id.as_ref(),
-            &signer_id,
+            previous_owner_id,
+            signer_id,
             "Paras(farming): owner_id should be signer_id"
         );
 
         // check seed exists
         self.get_seed(&msg);
 
-        self.internal_nft_deposit(&msg, &owner_id.to_string(), &token_id, &nft_contract_id);
+        self.internal_nft_deposit(&msg, &previous_owner_id.to_string(), &nft_contract_id, &token_id);
+        PromiseOrValue::Value(false)
     }
 }
