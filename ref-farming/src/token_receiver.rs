@@ -71,7 +71,7 @@ impl FungibleTokenReceiver for Contract {
         } else if msg_parsed.is_ok() {
             let FarmArgs {
                 transfer_type,
-                seed_id,
+                seed_id
             } = msg_parsed.unwrap();
             assert_eq!(transfer_type, "seed", "transfer_type must be \"seed\"");
 
