@@ -1,4 +1,4 @@
-use near_sdk_sim::{call, init_simulator, to_yocto, view};
+use near_sdk_sim::{call, init_simulator, to_yocto, view, DEFAULT_GAS};
 use near_sdk::json_types::{U128};
 use near_sdk::serde_json::Value;
 
@@ -419,11 +419,11 @@ fn test_farm_with_custom_seed_id() {
 
     // create farm
     println!("----->> Create farm.");
-    let farm_id = "dai@1#0".to_string();
+    let farm_id = "dai$1#0".to_string();
     let out_come = call!(
         owner,
         farming.create_simple_farm(HRSimpleFarmTerms{
-            seed_id: format!("{}@{}", token1.account_id(), "1"),
+            seed_id: format!("{}${}", token1.account_id(), "1"),
             reward_token: token1.valid_account_id(),
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
@@ -465,7 +465,7 @@ fn test_farm_with_custom_seed_id() {
     // farmer1 staking lpt
     println!("----->> Farmer1 staking lpt.");
 
-    let msg: String = "{\"transfer_type\":\"seed\",\"seed_id\":\"dai@1\"}".to_string();
+    let msg: String = "{\"transfer_type\":\"seed\",\"seed_id\":\"dai$1\"}".to_string();
     let out_come = call!(
         farmer1,
         token1.ft_transfer_call(to_va(farming_id()), U128(to_yocto("1")), None, msg),
@@ -479,7 +479,7 @@ fn test_farm_with_custom_seed_id() {
     let farm_info = show_farminfo(&farming, farm_id.clone(), false);
     assert_farming(&farm_info, "Running".to_string(), to_yocto("10"), 0, 0, 0, 0, 0);
     let user_seeds = show_userseeds(&farming, farmer1.account_id(), false);
-    assert_eq!(user_seeds.get(&String::from("dai@1")).unwrap().0, to_yocto("1"));
+    assert_eq!(user_seeds.get(&String::from("dai$1")).unwrap().0, to_yocto("1"));
     let unclaim = show_unclaim(&farming, farmer1.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, 0_u128);
 }
@@ -510,17 +510,17 @@ fn test_farm_with_nft_multiplier() {
     let nft_contract = deploy_nft_contract(&root, "nft-contract".to_string(), farmer1.account_id.clone());
     // create farm
     println!("----->> Create farm.");
-    let farm_id = "dai@1#0".to_string();
+    let farm_id = "dai$1#0".to_string();
     let mut nft_multiplier: HashMap<String, u32> = HashMap::new();
-    nft_multiplier.insert("nft-contract@1".to_string(), 100);
-    nft_multiplier.insert("nft-contract@2".to_string(), 200);
-    nft_multiplier.insert("nft-contract@3".to_string(), 300);
+    nft_multiplier.insert("nft-contract@1".to_string(), 10000);
+    nft_multiplier.insert("nft-contract@2".to_string(), 10000);
+    nft_multiplier.insert("nft-contract@3".to_string(), 10000);
 
     let out_come = call!(
         owner,
         farming.create_simple_farm(
             HRSimpleFarmTerms{
-                seed_id: format!("{}@{}", token1.account_id(), "1"),
+                seed_id: format!("{}${}", token1.account_id(), "1"),
                 reward_token: token1.valid_account_id(),
                 start_at: 0,
                 reward_per_session: to_yocto("1").into(),
@@ -566,7 +566,7 @@ fn test_farm_with_nft_multiplier() {
     // farmer1 staking dai
     println!("----->> Farmer1 staking lpt.");
 
-    let msg: String = "{\"transfer_type\":\"seed\",\"seed_id\":\"dai@1\"}".to_string();
+    let msg: String = "{\"transfer_type\":\"seed\",\"seed_id\":\"dai$1\"}".to_string();
     let out_come = call!(
         farmer1,
         token1.ft_transfer_call(to_va(farming_id()), U128(to_yocto("1")), None, msg),
@@ -579,7 +579,7 @@ fn test_farm_with_nft_multiplier() {
     let farm_info = show_farminfo(&farming, farm_id.clone(), false);
     assert_farming(&farm_info, "Running".to_string(), to_yocto("10"), 0, 0, 0, 0, 0);
     let user_seeds = show_userseeds_after_multiplier(&farming, farmer1.account_id(), false);
-    assert_eq!(user_seeds.get(&String::from("dai@1")).unwrap().0, to_yocto("1"));
+    assert_eq!(user_seeds.get(&String::from("dai$1")).unwrap().0, to_yocto("1"));
     let unclaim = show_unclaim(&farming, farmer1.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, 0_u128);
 
@@ -593,7 +593,7 @@ fn test_farm_with_nft_multiplier() {
             "1".to_string(),
             None,
             None,
-            format!("{}@{}", token1.account_id(), "1")
+            format!("{}${}", token1.account_id(), "1")
         ),
         deposit = 1
     );
@@ -607,19 +607,81 @@ fn test_farm_with_nft_multiplier() {
     assert_farming(&farm_info, "Running".to_string(), to_yocto("10"), 0, 0, 0, 0, 0);
     let user_seeds = show_userseeds_after_multiplier(&farming, farmer1.account_id(), false);
     println!("user_seeds {:?}", user_seeds);
-    assert_eq!(user_seeds.get(&String::from("dai@1")).unwrap().0, 1010000000000000000000000);
+    assert_eq!(user_seeds.get(&String::from("dai$1")).unwrap().0, 2000000000000000000000000);
     let unclaim = show_unclaim(&farming, farmer1.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, 0_u128);
 
     let user_nft_seeds = show_usernftseeds(&farming, farmer1.account_id(), false);
     println!("user_nft_seeds {:?}", user_nft_seeds);
 
+    println!("----->> Farmer1 staking nft.");
+
+    let out_come = call!(
+        farmer1,
+        nft_contract.nft_transfer_call(
+            to_va(farming_id()),
+            "2".to_string(),
+            None,
+            None,
+            format!("{}${}", token1.account_id(), "1")
+        ),
+        1,
+        DEFAULT_GAS
+    );
+
+    out_come.assert_success();
+    // println!("{:?}", out_come.promise_results());
+    println!("<<----- Farmer1 staked nft at #{}, ts:{}.",
+             root.borrow_runtime().current_block().block_height,
+             root.borrow_runtime().current_block().block_timestamp);
+    let farm_info = show_farminfo(&farming, farm_id.clone(), false);
+    assert_farming(&farm_info, "Running".to_string(), to_yocto("10"), 0, 0, 0, 0, 0);
+    let user_seeds = show_userseeds_after_multiplier(&farming, farmer1.account_id(), false);
+    println!("user_seeds {:?}", user_seeds);
+    assert_eq!(user_seeds.get(&String::from("dai$1")).unwrap().0, 3000000000000000000000000);
+    let unclaim = show_unclaim(&farming, farmer1.account_id(), farm_id.clone(), false);
+    assert_eq!(unclaim.0, 0_u128);
+
+    let user_nft_seeds = show_usernftseeds(&farming, farmer1.account_id(), false);
+    println!("farmer1 user_nft_seeds {:?}", user_nft_seeds);
+
+    println!("----->> Farmer1 staking nft.");
+
+    let out_come = call!(
+        farmer1,
+        nft_contract.nft_transfer_call(
+            to_va(farming_id()),
+            "3".to_string(),
+            None,
+            None,
+            format!("{}${}", token1.account_id(), "1")
+        ),
+        1,
+        DEFAULT_GAS
+    );
+
+    out_come.assert_success();
+    // println!("{:?}", out_come.promise_results());
+    println!("<<----- Farmer1 staked nft at #{}, ts:{}.",
+             root.borrow_runtime().current_block().block_height,
+             root.borrow_runtime().current_block().block_timestamp);
+    let farm_info = show_farminfo(&farming, farm_id.clone(), false);
+    assert_farming(&farm_info, "Running".to_string(), to_yocto("10"), 0, 0, 0, 0, 0);
+    let user_seeds = show_userseeds_after_multiplier(&farming, farmer1.account_id(), false);
+    println!("user_seeds {:?}", user_seeds);
+    assert_eq!(user_seeds.get(&String::from("dai$1")).unwrap().0, 4000000000000000000000000);
+    let unclaim = show_unclaim(&farming, farmer1.account_id(), farm_id.clone(), false);
+    assert_eq!(unclaim.0, 0_u128);
+
+    let user_nft_seeds = show_usernftseeds(&farming, farmer1.account_id(), false);
+    println!("farmer1 user_nft_seeds {:?}", user_nft_seeds);
+
     println!("----->> Farmer1 unstaking nft.");
 
     let out_come = call!(
         farmer1,
         farming.withdraw_nft(
-            "dai@1".to_string(),
+            "dai$1".to_string(),
             "nft-contract".to_string(),
             "1".to_string()
         ),
@@ -634,12 +696,154 @@ fn test_farm_with_nft_multiplier() {
     let farm_info = show_farminfo(&farming, farm_id.clone(), false);
     assert_farming(&farm_info, "Running".to_string(), to_yocto("10"), 0, 0, 0, 0, 0);
     let user_seeds = show_userseeds_after_multiplier(&farming, farmer1.account_id(), false);
-    println!("user_seeds {:?}", user_seeds);
-    assert_eq!(user_seeds.get(&String::from("dai@1")).unwrap().0, 1000000000000000000000000);
+    assert_eq!(user_seeds.get(&String::from("dai$1")).unwrap().0, 3000000000000000000000000);
     let unclaim = show_unclaim(&farming, farmer1.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, 0_u128);
 
     let user_nft_seeds = show_usernftseeds(&farming, farmer1.account_id(), false);
-    println!("user_nft_seeds {:?}", user_nft_seeds);
+    println!("farmer1 user_nft_seeds {:?}", user_nft_seeds);
 
+    // check farmer 2 nft seeds
+    let user_nft_seeds = show_usernftseeds(&farming, farmer2.account_id(), false);
+    println!("farmer2 user_nft_seeds {:?}", user_nft_seeds);
+
+    println!("----->> Farmer1 send nft 1 to Farmer2.");
+
+    let out_come = call!(
+        farmer1,
+        nft_contract.nft_transfer(
+            to_va(farmer2.account_id.clone()),
+            "1".to_string(),
+            None,
+            None
+        ),
+        1,
+        DEFAULT_GAS
+    );
+
+    out_come.assert_success();
+
+    println!("----->> Farmer2 staking nft.");
+
+    let out_come = call!(
+        farmer2,
+        nft_contract.nft_transfer_call(
+            to_va(farming_id()),
+            "1".to_string(),
+            None,
+            None,
+            format!("{}${}", token1.account_id(), "1")
+        ),
+        1,
+        DEFAULT_GAS
+    );
+
+    out_come.assert_success();
+    println!("<<----- Farmer2 staked nft at #{}, ts:{}.",
+             root.borrow_runtime().current_block().block_height,
+             root.borrow_runtime().current_block().block_timestamp);
+    let user_nft_seeds = show_usernftseeds(&farming, farmer2.account_id(), false);
+    println!("farmer2 user_nft_seeds {:?}", user_nft_seeds);
+
+    println!("----->> Farmer2 staking lpt.");
+
+    let msg: String = "{\"transfer_type\":\"seed\",\"seed_id\":\"dai$1\"}".to_string();
+    let out_come = call!(
+        farmer2,
+        token1.ft_transfer_call(to_va(farming_id()), U128(to_yocto("1")), None, msg),
+        deposit = 1
+    );
+    out_come.assert_success();
+    println!("<<----- Farmer2 staked liquidity at #{}, ts:{}.",
+             root.borrow_runtime().current_block().block_height,
+             root.borrow_runtime().current_block().block_timestamp);
+    let farm_info = show_farminfo(&farming, farm_id.clone(), false);
+    assert_farming(&farm_info, "Running".to_string(), to_yocto("10"), 0, 0, 0, 0, 0);
+    let user_seeds = show_userseeds_after_multiplier(&farming, farmer2.account_id(), false);
+    assert_eq!(user_seeds.get(&String::from("dai$1")).unwrap().0, 2000000000000000000000000);
+    let unclaim = show_unclaim(&farming, farmer2.account_id(), farm_id.clone(), false);
+    assert_eq!(unclaim.0, 0_u128);
+
+    let out_come = call!(
+        farmer2,
+        farming.withdraw_seed(farm_info.seed_id.clone(), to_yocto("0.5").into()),
+        deposit = 1
+    );
+    out_come.assert_success();
+    // println!("{:#?}", out_come.promise_results());
+    let user_seeds = show_userseeds_after_multiplier(&farming, farmer2.account_id(), false);
+    assert_eq!(user_seeds.get(&String::from("dai$1")).unwrap().0, 1000000000000000000000000);
+    println!("<<----- Farmer2 unstake the other half lpt, now #{}, ts:{}.",
+             root.borrow_runtime().current_block().block_height,
+             root.borrow_runtime().current_block().block_timestamp);
+
+    println!("----->> move to 60 secs later.");
+    assert!(root.borrow_runtime_mut().produce_blocks(60).is_ok());
+    println!("<<----- Chain goes 60 blocks, now #{}, ts:{}.",
+             root.borrow_runtime().current_block().block_height,
+             root.borrow_runtime().current_block().block_timestamp);
+    let farm_info = show_farminfo(&farming, farm_id.clone(), false);
+    assert_farming(&farm_info, "Running".to_string(), to_yocto("10"), 1, 0, 0, to_yocto("1"), 0);
+    let unclaim = show_unclaim(&farming, farmer1.account_id(), farm_id.clone(), false);
+    assert_eq!(unclaim.0, to_yocto("0.75"));
+    let unclaim = show_unclaim(&farming, farmer2.account_id(), farm_id.clone(), false);
+    assert_eq!(unclaim.0, to_yocto("0.25"));
+}
+
+#[test]
+fn test_maximum_nft_multiplier() {
+
+    let root = init_simulator(None);
+
+    println!("----->> Prepare accounts.");
+    let owner = root.create_user("owner".to_string(), to_yocto("100"));
+    let farmer1 = root.create_user("farmer1".to_string(), to_yocto("100"));
+    let farmer2 = root.create_user("farmer2".to_string(), to_yocto("100"));
+    println!("<<----- owner and 2 farmers prepared.");
+
+    // println!("----->> Prepare ref-exchange and swap pool.");
+    let (_, token1, _) = prepair_pool_and_liquidity(
+        &root, &owner, farming_id(), vec![&farmer1, &farmer2]);
+
+    // deploy farming contract and register user
+    println!("----->> Deploy farming and register farmers.");
+    let farming = deploy_farming(&root, farming_id(), owner.account_id());
+    call!(farmer1, farming.storage_deposit(None, None), deposit = to_yocto("1")).assert_success();
+    call!(farmer2, farming.storage_deposit(None, None), deposit = to_yocto("1")).assert_success();
+    println!("<<----- farming deployed, farmers registered.");
+
+    // create farm
+    println!("----->> Create farm.");
+    let farm_id = "dai$1#0".to_string();
+    let mut nft_multiplier: HashMap<String, u32> = HashMap::new();
+
+    for i in 0..300 {
+        nft_multiplier.insert(format!("{}@{}", "nft-contract", i.to_string()), 300);
+    }
+
+    let out_come = call!(
+        owner,
+        farming.create_simple_farm(
+            HRSimpleFarmTerms{
+                seed_id: format!("{}${}", token1.account_id(), "1"),
+                reward_token: token1.valid_account_id(),
+                start_at: 0,
+                reward_per_session: to_yocto("1").into(),
+                session_interval: 60,
+            },
+            None,
+            Some(nft_multiplier)
+        ),
+        deposit = to_yocto("1")
+    );
+
+    out_come.assert_success();
+    assert_eq!(Value::String(farm_id.clone()), out_come.unwrap_json_value());
+    println!("<<----- Farm {} created at #{}, ts:{}.",
+             farm_id,
+             root.borrow_runtime().current_block().block_height,
+             root.borrow_runtime().current_block().block_timestamp);
+
+    let seed_info = show_seedsinfo(&farming, false);
+    println!("seed_info {:?}", seed_info);
 }
