@@ -15,6 +15,7 @@ pub const GAS_FOR_NFT_TRANSFER: Gas = 20_000_000_000_000;
 /// hotfix_insuffient_gas_for_mft_resolve_transfer, increase from 5T to 20T
 pub const GAS_FOR_RESOLVE_TRANSFER: Gas = 20_000_000_000_000;
 pub const MFT_TAG: &str = "@";
+pub const FT_INDEX_TAG: &str = "$";
 
 
 construct_uint! {

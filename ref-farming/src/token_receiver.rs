@@ -1,6 +1,6 @@
 use crate::errors::*;
 use crate::farm_seed::SeedType;
-use crate::utils::MFT_TAG;
+use crate::utils::{MFT_TAG, FT_INDEX_TAG};
 use crate::*;
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
@@ -78,7 +78,7 @@ impl FungibleTokenReceiver for Contract {
 
             let contract_id: String = env::predecessor_account_id();
             let seed_contract_id_from_seed_id: String =
-                seed_id.split('@').next().unwrap().to_string();
+                seed_id.split(FT_INDEX_TAG).next().unwrap().to_string();
             assert_eq!(
                 contract_id, seed_contract_id_from_seed_id,
                 "seed_id is not the correct ft contract"
@@ -262,9 +262,6 @@ impl NonFungibleTokenReceiver for Contract {
             signer_id,
             "Paras(farming): owner_id should be signer_id"
         );
-
-        // check seed exists
-        self.get_seed(&msg);
 
         self.internal_nft_deposit(&msg, &previous_owner_id.to_string(), &nft_contract_id, &token_id);
         PromiseOrValue::Value(false)

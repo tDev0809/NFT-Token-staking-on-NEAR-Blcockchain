@@ -3,11 +3,7 @@ use std::convert::TryInto;
 use near_sdk::json_types::{U128};
 use near_sdk::{AccountId, Balance, PromiseResult};
 
-use crate::utils::{
-    assert_one_yocto, ext_multi_fungible_token, ext_fungible_token, ext_non_fungible_token,
-    ext_self, wrap_mft_token_id, parse_seed_id, GAS_FOR_FT_TRANSFER, GAS_FOR_RESOLVE_TRANSFER,
-    GAS_FOR_NFT_TRANSFER
-};
+use crate::utils::{assert_one_yocto, ext_multi_fungible_token, ext_fungible_token, ext_non_fungible_token, ext_self, wrap_mft_token_id, parse_seed_id, GAS_FOR_FT_TRANSFER, GAS_FOR_RESOLVE_TRANSFER, GAS_FOR_NFT_TRANSFER, FT_INDEX_TAG};
 use crate::errors::*;
 use crate::farm_seed::SeedType;
 use crate::*;
@@ -51,6 +47,7 @@ impl Contract {
         assert_one_yocto();
         let sender_id = env::predecessor_account_id();
 
+        let seed_contract_id: AccountId = seed_id.split(FT_INDEX_TAG).next().unwrap().to_string();
         let amount: Balance = amount.into();
 
         // update inner state
@@ -62,7 +59,7 @@ impl Contract {
                     sender_id.clone().try_into().unwrap(),
                     amount.into(),
                     None,
-                    &seed_id,
+                    &seed_contract_id,
                     1,  // one yocto near
                     GAS_FOR_FT_TRANSFER,
                 )
@@ -426,6 +423,10 @@ impl Contract {
         if nft_multiplier.is_none() {
             return *ft_seed_balance.unwrap_or(&0u128)
         }
+
+        if ft_seed_balance.is_none() {
+            return 0;
+        }
         // split x.paras.near@1:1
         // to "x.paras.near@1", ":1"
         let mut multiplier: u128 = 0;
@@ -444,7 +445,6 @@ impl Contract {
         }
 
 
-        let amount_after_multiplier : u128 = ft_seed_balance.unwrap() + ft_seed_balance.unwrap() / 10000 * multiplier;
-        return amount_after_multiplier;
+        return ft_seed_balance.unwrap() + ft_seed_balance.unwrap() / 10000 * multiplier
     }
 }
