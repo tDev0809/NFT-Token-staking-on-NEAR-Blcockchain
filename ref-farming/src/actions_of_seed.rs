@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use near_sdk::json_types::{U128};
 use near_sdk::{AccountId, Balance, PromiseResult};
 
-use crate::utils::{assert_one_yocto, ext_multi_fungible_token, ext_fungible_token, ext_non_fungible_token, ext_self, wrap_mft_token_id, parse_seed_id, GAS_FOR_FT_TRANSFER, GAS_FOR_RESOLVE_TRANSFER, GAS_FOR_NFT_TRANSFER, FT_INDEX_TAG};
+use crate::utils::{assert_one_yocto, ext_multi_fungible_token, ext_fungible_token, ext_non_fungible_token, ext_self, wrap_mft_token_id, parse_seed_id, GAS_FOR_FT_TRANSFER, GAS_FOR_RESOLVE_TRANSFER, GAS_FOR_NFT_TRANSFER, FT_INDEX_TAG, PARAS_SERIES_DELIMETER};
 use crate::errors::*;
 use crate::farm_seed::SeedType;
 use crate::*;
@@ -436,7 +436,7 @@ impl Contract {
                     .iter()
                     .for_each(
                         |x: ContractNFTTokenId| {
-                            let contract_token_series_id_split: Vec<&str> = x.split(':').collect();
+                            let contract_token_series_id_split: Vec<&str> = x.split(PARAS_SERIES_DELIMETER).collect();
                             let multiply = *nft_multiplier.get(&contract_token_series_id_split[0].to_string()).unwrap_or(&0);
                             multiplier += multiply as u128;
                         }

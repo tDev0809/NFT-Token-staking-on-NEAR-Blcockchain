@@ -16,6 +16,8 @@ pub const GAS_FOR_NFT_TRANSFER: Gas = 20_000_000_000_000;
 pub const GAS_FOR_RESOLVE_TRANSFER: Gas = 20_000_000_000_000;
 pub const MFT_TAG: &str = "@";
 pub const FT_INDEX_TAG: &str = "$";
+pub const NFT_DELIMETER: &str = "@";
+pub const PARAS_SERIES_DELIMETER: &str = ":";
 
 
 construct_uint! {

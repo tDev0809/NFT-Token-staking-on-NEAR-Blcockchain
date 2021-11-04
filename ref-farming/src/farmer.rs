@@ -14,6 +14,7 @@ use crate::simple_farm::{ContractNFTTokenId, NFTTokenId};
 use crate::errors::*;
 use crate::utils::MAX_ACCOUNT_LENGTH;
 use crate::StorageKeys;
+use crate::utils::NFT_DELIMETER;
 
 use near_sdk::collections::UnorderedSet;
 
@@ -127,7 +128,7 @@ impl Farmer {
     }
 
     pub fn add_nft(&mut self, seed_id: &SeedId, nft_contract_id: &String, nft_token_id: &NFTTokenId) {
-        let contract_nft_token_id = format!("{}@{}", nft_contract_id, nft_token_id);
+        let contract_nft_token_id = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
         if let Some(nft_contract_seed) = self.nft_seeds.get_mut(seed_id) {
             nft_contract_seed.insert(&contract_nft_token_id);
         } else {
@@ -140,7 +141,7 @@ impl Farmer {
     }
 
     pub fn sub_nft(&mut self, seed_id: &SeedId, nft_contract_id: &String, nft_token_id: &NFTTokenId) -> Option<String> {
-        let contract_nft_token_id = format!("{}@{}", nft_contract_id, nft_token_id);
+        let contract_nft_token_id = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
         let mut nft_token_id_exist: bool = false;
         if let Some(nft_contract_seed) = self.nft_seeds.get_mut(seed_id) {
             nft_token_id_exist = nft_contract_seed.remove(&contract_nft_token_id);
