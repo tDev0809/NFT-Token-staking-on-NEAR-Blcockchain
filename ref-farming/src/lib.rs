@@ -150,7 +150,7 @@ mod tests {
         // storage needed: 341
         testing_env!(context
             .predecessor_account_id(accounts(0))
-            .attached_deposit(env::storage_byte_cost() * 560)
+            .attached_deposit(env::storage_byte_cost() * 570)
             .build());
         contract.create_simple_farm(HRSimpleFarmTerms {
             seed_id: seed.into(),
@@ -158,7 +158,7 @@ mod tests {
             start_at: 0,
             reward_per_session: U128(session_amount),
             session_interval: session_interval,
-        }, Some(U128(10)), None)
+        }, Some(U128(10)), None, None)
     }
 
     fn deposit_reward(

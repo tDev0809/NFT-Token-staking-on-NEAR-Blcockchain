@@ -41,7 +41,11 @@ pub struct FarmSeed {
 }
 
 impl FarmSeed {
-    pub fn new(seed_id: &SeedId, min_deposit: Balance, nft_multiplier: Option<HashMap<String, u32>>) -> Self {
+    pub fn new(
+        seed_id: &SeedId,
+        min_deposit: Balance,
+        nft_multiplier: Option<HashMap<String, u32>>
+    ) -> Self {
         let (token_id, token_index) = parse_seed_id(seed_id);
         let seed_type: SeedType;
         if token_id == token_index {
@@ -56,7 +60,7 @@ impl FarmSeed {
             next_index: 0,
             amount: 0,
             min_deposit,
-            nft_multiplier
+            nft_multiplier,
         }
     }
 
@@ -84,7 +88,11 @@ pub enum VersionedFarmSeed {
 
 impl VersionedFarmSeed {
 
-    pub fn new(seed_id: &SeedId, min_deposit: Balance, nft_multiplier: Option<HashMap<String, u32>>) -> Self {
+    pub fn new(
+        seed_id: &SeedId,
+        min_deposit: Balance,
+        nft_multiplier: Option<HashMap<String, u32>>
+    ) -> Self {
         VersionedFarmSeed::V101(FarmSeed::new(seed_id, min_deposit, nft_multiplier))
     }
 
