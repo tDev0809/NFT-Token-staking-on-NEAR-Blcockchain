@@ -29,7 +29,7 @@ fn failure_e10_stake_before_register() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -67,7 +67,7 @@ fn failure_e10_unstake_before_register() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -103,7 +103,7 @@ fn failure_e10_claim_before_register() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -172,7 +172,7 @@ fn failure_e11_create_farm() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("0.00001")
     );
     assert!(!out_come.is_ok());
@@ -222,7 +222,7 @@ fn failure_e11_stake() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -262,7 +262,7 @@ fn failure_e11_claim() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -340,7 +340,7 @@ fn failure_e12_e13() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -434,7 +434,7 @@ fn failure_e21_e22() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -527,7 +527,7 @@ fn failure_e25_withdraw_reward() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -607,7 +607,7 @@ fn failure_e25_withdraw_seed_ft() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, Some(U128(100)), None),
+        }, Some(U128(100)), None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -656,7 +656,7 @@ fn failure_e31_unstake_seed() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -724,7 +724,7 @@ fn failure_e32_unstake_over_balance() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -770,7 +770,7 @@ fn failure_e33() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     assert!(!out_come.is_ok());
@@ -800,7 +800,7 @@ fn failure_e34_stake_below_minimum() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -839,7 +839,7 @@ fn failure_e41_when_deposit_reward_token() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -885,7 +885,7 @@ fn failure_e42_when_force_clean_farm() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -951,7 +951,7 @@ fn failure_e42_when_claim_reward() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -1011,7 +1011,7 @@ fn failure_e42_when_remove_user_rps_and_view_unclaim_reward() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -1081,7 +1081,7 @@ fn failure_e43() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -1149,7 +1149,7 @@ fn failure_e44() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();

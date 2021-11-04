@@ -178,7 +178,7 @@ fn multi_farm_with_different_state() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 50,
-        }, Some(U128(1000000000000000000)), None),
+        }, Some(U128(1000000000000000000)), None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -207,7 +207,7 @@ fn multi_farm_with_different_state() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 50,
-        }, Some(U128(1000000000000000000)), None),
+        }, Some(U128(1000000000000000000)), None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -228,7 +228,7 @@ fn multi_farm_with_different_state() {
             start_at: 300,
             reward_per_session: to_yocto("1").into(),
             session_interval: 50,
-        }, Some(U128(1000000000000000000)), None),
+        }, Some(U128(1000000000000000000)), None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();

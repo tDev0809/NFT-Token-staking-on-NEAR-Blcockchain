@@ -45,7 +45,7 @@ fn single_paras_farm() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -428,7 +428,7 @@ fn test_farm_with_custom_seed_id() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
@@ -527,7 +527,8 @@ fn test_farm_with_nft_multiplier() {
                 session_interval: 60,
             },
             None,
-            Some(nft_multiplier)
+            Some(nft_multiplier),
+            None
         ),
         deposit = to_yocto("1")
     );
@@ -832,7 +833,8 @@ fn test_maximum_nft_multiplier() {
                 session_interval: 60,
             },
             None,
-            Some(nft_multiplier)
+            Some(nft_multiplier),
+            None
         ),
         deposit = to_yocto("1")
     );

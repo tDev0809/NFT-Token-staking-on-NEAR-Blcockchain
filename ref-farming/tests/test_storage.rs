@@ -84,7 +84,7 @@ fn storage_stake() {
             start_at: 0,
             reward_per_session: to_yocto("1").into(),
             session_interval: 60,
-        }, None, None),
+        }, None, None, None),
         deposit = to_yocto("1")
     );
     out_come.assert_success();
