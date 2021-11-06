@@ -12,11 +12,13 @@ use near_sdk::{env, AccountId, Balance};
 use crate::{SeedId, FarmId, RPS};
 use crate::simple_farm::{ContractNFTTokenId, NFTTokenId};
 use crate::errors::*;
-use crate::utils::MAX_ACCOUNT_LENGTH;
+use crate::utils::{MAX_ACCOUNT_LENGTH, PARAS_SERIES_DELIMETER};
 use crate::StorageKeys;
 use crate::utils::NFT_DELIMETER;
 
 use near_sdk::collections::UnorderedSet;
+use crate::farm_seed::FarmSeed;
+use std::thread::current;
 
 /// each entry cost MAX_ACCOUNT_LENGTH bytes,
 /// amount: Balance cost 16 bytes
@@ -38,7 +40,8 @@ pub struct Farmer {
     /// record user_last_rps of farms
     pub user_rps: LookupMap<FarmId, RPS>,
     pub rps_count: u32,
-    pub nft_seeds: HashMap<SeedId, UnorderedSet<ContractNFTTokenId>>
+    pub nft_seeds: HashMap<SeedId, UnorderedSet<ContractNFTTokenId>>,
+    pub current_nft_multiplier: HashMap<SeedId, u32>,
 }
 
 impl Farmer {
@@ -127,7 +130,7 @@ impl Farmer {
         * env::storage_byte_cost()
     }
 
-    pub fn add_nft(&mut self, seed_id: &SeedId, nft_contract_id: &String, nft_token_id: &NFTTokenId) {
+    pub fn add_nft(&mut self, seed_id: &SeedId, nft_contract_id: &String, nft_token_id: &NFTTokenId) -> ContractNFTTokenId {
         let contract_nft_token_id = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
         if let Some(nft_contract_seed) = self.nft_seeds.get_mut(seed_id) {
             nft_contract_seed.insert(&contract_nft_token_id);
@@ -138,19 +141,54 @@ impl Farmer {
             new_nft_contract_seeds.insert(&contract_nft_token_id);
             self.nft_seeds.insert(seed_id.clone(), new_nft_contract_seeds);
         }
+
+        return contract_nft_token_id;
     }
 
-    pub fn sub_nft(&mut self, seed_id: &SeedId, nft_contract_id: &String, nft_token_id: &NFTTokenId) -> Option<String> {
+    pub fn sub_nft(&mut self, seed_id: &SeedId, nft_contract_id: &String, nft_token_id: &NFTTokenId) -> Option<ContractNFTTokenId> {
         let contract_nft_token_id = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
         let mut nft_token_id_exist: bool = false;
         if let Some(nft_contract_seed) = self.nft_seeds.get_mut(seed_id) {
             nft_token_id_exist = nft_contract_seed.remove(&contract_nft_token_id);
         }
         if nft_token_id_exist {
-            Some(nft_token_id.clone())
+            Some(contract_nft_token_id)
         } else {
             None
         }
+    }
+
+    pub fn update_farmer_multiplier(
+        &mut self,
+        seed: &FarmSeed,
+        nft_staked: ContractNFTTokenId,
+        is_stake: bool,
+    ) -> u32 {
+        // split x.paras.near@1:1
+        // to "x.paras.near@1", ":1"
+        let mut current_multiplier: u32 = *self.current_nft_multiplier.get(&seed.seed_id).unwrap_or(&0u32);
+        if let Some(nft_multiplier) = &seed.nft_multiplier {
+            let contract_token_series_id_split: Vec<&str> = nft_staked.split(PARAS_SERIES_DELIMETER).collect();
+            let multiply: u32 = *nft_multiplier.get(&contract_token_series_id_split[0].to_string()).unwrap_or(&0);
+            if is_stake {
+                current_multiplier += multiply;
+            } else {
+                current_multiplier -= multiply;
+            }
+        } else {
+            return 0;
+        }
+
+        self.current_nft_multiplier.insert(seed.seed_id.clone(), current_multiplier);
+
+        return current_multiplier;
+    }
+
+    pub fn calculate_amount_after_multiplier(&self, seed: &FarmSeed) -> u128{
+        let current_multiplier: u32 = *self.current_nft_multiplier.get(&seed.seed_id).unwrap_or(&0u32);
+        let seed_amount = *self.seeds.get(&seed.seed_id).unwrap_or(&0u128);
+
+        return seed_amount + seed_amount / 10000 * current_multiplier as u128;
     }
 
 
@@ -178,7 +216,8 @@ impl VersionedFarmer {
             }),
             rps_count: 0,
             nft_seeds: HashMap::new(),
-            seeds_after_multiplier: HashMap::new()
+            seeds_after_multiplier: HashMap::new(),
+            current_nft_multiplier: HashMap::new(),
         })
     }
 
