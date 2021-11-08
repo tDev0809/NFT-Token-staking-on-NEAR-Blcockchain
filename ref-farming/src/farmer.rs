@@ -18,7 +18,6 @@ use crate::utils::NFT_DELIMETER;
 
 use near_sdk::collections::UnorderedSet;
 use crate::farm_seed::FarmSeed;
-use std::thread::current;
 
 /// each entry cost MAX_ACCOUNT_LENGTH bytes,
 /// amount: Balance cost 16 bytes

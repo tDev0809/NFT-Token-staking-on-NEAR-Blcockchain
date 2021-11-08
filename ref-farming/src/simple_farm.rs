@@ -98,13 +98,6 @@ pub struct SimpleFarmRewardDistribution {
     pub rr: u32,
 }
 
-#[derive(Serialize, Deserialize, BorshSerialize, BorshDeserialize)]
-#[serde(crate = "near_sdk::serde")]
-pub struct FarmMetadata {
-    pub title: Option<String>,
-    pub media: Option<String>,
-}
-
 ///   Implementation of simple farm, Similar to the design of "berry farm".
 ///   Farmer stake their seed to farming on multiple farm accept that seed.
 #[derive(BorshSerialize, BorshDeserialize)]
@@ -125,15 +118,12 @@ pub struct SimpleFarm {
     pub amount_of_claimed: Balance,
     /// when there is no seed token staked, reward goes to beneficiary
     pub amount_of_beneficiary: Balance,
-
-    pub metadata: FarmMetadata
 }
 
 impl SimpleFarm {
     pub(crate) fn new(
         id: FarmId,
         terms: SimpleFarmTerms,
-        metadata: Option<FarmMetadata>,
     ) -> Self {
         Self {
             farm_id: id.clone(),
@@ -144,10 +134,6 @@ impl SimpleFarm {
             status: SimpleFarmStatus::Created,
             last_distribution: SimpleFarmRewardDistribution::default(),
             terms,
-            metadata: metadata.unwrap_or( FarmMetadata {
-                title: None,
-                media: None
-            }),
         }
     }
 

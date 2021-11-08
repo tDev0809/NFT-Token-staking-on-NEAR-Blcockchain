@@ -23,6 +23,13 @@ pub enum SeedType {
     MFT,
 }
 
+#[derive(Serialize, Deserialize, BorshSerialize, BorshDeserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub struct FarmSeedMetadata {
+    pub title: Option<String>,
+    pub media: Option<String>,
+}
+
 #[derive(BorshSerialize, BorshDeserialize)]
 #[cfg_attr(feature = "test", derive(Clone))]
 pub struct FarmSeed {
@@ -37,14 +44,16 @@ pub struct FarmSeed {
     /// total (staked) balance of this seed (Farming Token)
     pub amount: Balance,
     pub min_deposit: Balance,
-    pub nft_multiplier: Option<HashMap<String, u32>>
+    pub nft_multiplier: Option<HashMap<String, u32>>,
+    pub metadata: Option<FarmSeedMetadata>
 }
 
 impl FarmSeed {
     pub fn new(
         seed_id: &SeedId,
         min_deposit: Balance,
-        nft_multiplier: Option<HashMap<String, u32>>
+        nft_multiplier: Option<HashMap<String, u32>>,
+        metadata: Option<FarmSeedMetadata>
     ) -> Self {
         let (token_id, token_index) = parse_seed_id(seed_id);
         let seed_type: SeedType;
@@ -61,6 +70,7 @@ impl FarmSeed {
             amount: 0,
             min_deposit,
             nft_multiplier,
+            metadata
         }
     }
 
@@ -91,9 +101,10 @@ impl VersionedFarmSeed {
     pub fn new(
         seed_id: &SeedId,
         min_deposit: Balance,
-        nft_multiplier: Option<HashMap<String, u32>>
+        nft_multiplier: Option<HashMap<String, u32>>,
+        metadata: Option<FarmSeedMetadata>,
     ) -> Self {
-        VersionedFarmSeed::V101(FarmSeed::new(seed_id, min_deposit, nft_multiplier))
+        VersionedFarmSeed::V101(FarmSeed::new(seed_id, min_deposit, nft_multiplier, metadata))
     }
 
     /// Upgrades from other versions to the currently used version.
@@ -141,24 +152,41 @@ pub struct SeedInfo {
     pub next_index: u32,
     pub amount: U128,
     pub min_deposit: U128,
-    pub nft_multiplier: Option<HashMap<String, u32>>
+    pub nft_multiplier: Option<HashMap<String, u32>>,
+    pub title: Option<String>,
+    pub media: Option<String>
 }
 
 impl From<&FarmSeed> for SeedInfo {
     fn from(fs: &FarmSeed) -> Self {
-
         let seed_type = match fs.seed_type {
             SeedType::FT => "FT".to_string(),
             SeedType::MFT => "MFT".to_string(),
         };
-        Self {
-            seed_id: fs.seed_id.clone(),
-            seed_type,
-            next_index: fs.next_index,
-            amount: fs.amount.into(),
-            min_deposit: fs.min_deposit.into(),
-            farms: fs.farms.iter().map(|key| key.clone()).collect(),
-            nft_multiplier: fs.nft_multiplier.clone()
+        if let Some(seed_metadata) = fs.metadata.clone() {
+            Self {
+                seed_id: fs.seed_id.clone(),
+                seed_type,
+                next_index: fs.next_index,
+                amount: fs.amount.into(),
+                min_deposit: fs.min_deposit.into(),
+                farms: fs.farms.iter().map(|key| key.clone()).collect(),
+                nft_multiplier: fs.nft_multiplier.clone(),
+                title: Some(seed_metadata.title.unwrap_or("".to_string())),
+                media: Some(seed_metadata.media.unwrap_or("".to_string()))
+            }
+        } else {
+            Self {
+                seed_id: fs.seed_id.clone(),
+                seed_type,
+                next_index: fs.next_index,
+                amount: fs.amount.into(),
+                min_deposit: fs.min_deposit.into(),
+                farms: fs.farms.iter().map(|key| key.clone()).collect(),
+                nft_multiplier: fs.nft_multiplier.clone(),
+                title: Some("".to_string()),
+                media: Some("".to_string())
+            }
         }
     }
 }

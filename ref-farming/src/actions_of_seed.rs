@@ -3,13 +3,11 @@ use std::convert::TryInto;
 use near_sdk::json_types::{U128};
 use near_sdk::{AccountId, Balance, PromiseResult};
 
-use crate::utils::{assert_one_yocto, ext_multi_fungible_token, ext_fungible_token, ext_non_fungible_token, ext_self, wrap_mft_token_id, parse_seed_id, GAS_FOR_FT_TRANSFER, GAS_FOR_RESOLVE_TRANSFER, GAS_FOR_NFT_TRANSFER, FT_INDEX_TAG, PARAS_SERIES_DELIMETER};
+use crate::utils::{assert_one_yocto, ext_multi_fungible_token, ext_fungible_token, ext_non_fungible_token, ext_self, wrap_mft_token_id, parse_seed_id, GAS_FOR_FT_TRANSFER, GAS_FOR_RESOLVE_TRANSFER, GAS_FOR_NFT_TRANSFER, FT_INDEX_TAG};
 use crate::errors::*;
 use crate::farm_seed::SeedType;
 use crate::*;
 use crate::simple_farm::{NFTTokenId, ContractNFTTokenId};
-use std::collections::HashMap;
-use near_sdk::collections::UnorderedSet;
 
 #[near_bindgen]
 impl Contract {
@@ -19,7 +17,7 @@ impl Contract {
         assert_one_yocto();
         let sender_id = env::predecessor_account_id();
 
-        let contract_nft_token_id = self.internal_nft_withdraw(&seed_id, &sender_id, &nft_contract_id, &nft_token_id);
+        self.internal_nft_withdraw(&seed_id, &sender_id, &nft_contract_id, &nft_token_id);
 
         // transfer nft back to the owner
         ext_non_fungible_token::nft_transfer(

@@ -6,7 +6,7 @@ use crate::utils::{gen_farm_id, MIN_SEED_DEPOSIT, parse_farm_id};
 use crate::errors::*;
 use crate::*;
 use std::collections::HashMap;
-use crate::simple_farm::FarmMetadata;
+use crate::farm_seed::FarmSeedMetadata;
 
 
 #[near_bindgen]
@@ -18,7 +18,7 @@ impl Contract {
           terms: HRSimpleFarmTerms,
           min_deposit: Option<U128>,
           nft_multiplier: Option<HashMap<String, u32>>,
-          metadata: Option<FarmMetadata>,
+          metadata: Option<FarmSeedMetadata>,
     ) -> FarmId {
         self.assert_owner();
         
@@ -54,7 +54,7 @@ impl Contract {
         terms: &HRSimpleFarmTerms,
         min_deposit: Balance,
         nft_multiplier: Option<HashMap<String, u32>>,
-        metadata: Option<FarmMetadata>
+        metadata: Option<FarmSeedMetadata>
     ) -> FarmId {
         
         // let mut farm_seed = self.get_seed_default(&terms.seed_id, min_deposit);
@@ -69,7 +69,7 @@ impl Contract {
                 .as_bytes(),
             );
         } else {
-            farm_seed = VersionedFarmSeed::new(&terms.seed_id, min_deposit, nft_multiplier);
+            farm_seed = VersionedFarmSeed::new(&terms.seed_id, min_deposit, nft_multiplier, metadata);
             env::log(
                 format!(
                     "The first farm created In seed {}, with min_deposit {}",
@@ -83,8 +83,7 @@ impl Contract {
 
         let farm = Farm::SimpleFarm(SimpleFarm::new(
             farm_id.clone(),
-            terms.into(),
-            metadata
+            terms.into()
         ));
         
         farm_seed.get_ref_mut().farms.insert(farm_id.clone());
