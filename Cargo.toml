@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "./ref-exchange",
     "./test-token",
     "./ref-farming",
     "./test-nft"

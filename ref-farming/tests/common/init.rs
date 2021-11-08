@@ -2,10 +2,10 @@
 use super::utils::to_va;
 
 use near_sdk::{AccountId};
-use near_sdk_sim::{call, deploy, to_yocto, ContractAccount, UserAccount};
+use near_sdk_sim::{call, deploy, to_yocto, ContractAccount, UserAccount, DEFAULT_GAS};
+use near_sdk::serde_json::json;
 
 // use near_sdk_sim::transaction::ExecutionStatus;
-use ref_exchange::{ContractContract as TestRef};
 
 use test_token::ContractContract as TestToken;
 use ref_farming::{ContractContract as Farming};
@@ -30,14 +30,26 @@ pub fn deploy_farming(root: &UserAccount, farming_id: AccountId, owner_id: Accou
     farming
 }
 
-pub fn deploy_pool(root: &UserAccount, contract_id: AccountId, owner_id: AccountId) -> ContractAccount<TestRef> {
-    let pool = deploy!(
-        contract: TestRef,
-        contract_id: contract_id,
-        bytes: &EXCHANGE_WASM_BYTES,
-        signer_account: root,
-        init_method: new(to_va(owner_id), 4, 1)
+pub fn deploy_pool(root: &UserAccount, contract_id: AccountId, owner_id: AccountId) -> UserAccount {
+
+    let pool = root.deploy(
+        &EXCHANGE_WASM_BYTES,
+        contract_id.clone(),
+        to_yocto("100")
     );
+
+    pool.call(
+        contract_id,
+        "new",
+        &json!({
+            "owner_id": owner_id,
+            "exchange_fee": 4,
+            "referral_fee": 1
+        }).to_string().into_bytes(),
+        DEFAULT_GAS / 2,
+        0
+    );
+
     pool
 }
 

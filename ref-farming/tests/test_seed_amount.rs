@@ -1,4 +1,4 @@
-use near_sdk_sim::{call, init_simulator, to_yocto, view};
+use near_sdk_sim::{call, init_simulator, to_yocto, view, DEFAULT_GAS};
 use near_sdk::json_types::{U128};
 use near_sdk::serde_json::Value;
 
@@ -8,6 +8,7 @@ use crate::common::utils::*;
 use crate::common::init::{deploy_farming, deploy_token};
 use crate::common::views::*;
 use crate::common::actions::*;
+use near_sdk::serde_json::json;
 
 mod common;
 
@@ -55,11 +56,19 @@ fn seed_amount_little() {
     .assert_success();
     let farm_info = show_farminfo(&farming, farm_id.clone(), false);
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     let out_come = call!(
         farmer1,
@@ -111,17 +120,26 @@ fn seed_amount_huge() {
     let farmer1 = root.create_user("farmer1".to_string(), to_yocto("100"));
 
     let (pool, token1, token2) = prepair_pool(&root, &owner);
-    call!(root, pool.mft_register(":0".to_string(), to_va(farming_id())), deposit = to_yocto("1"))
-    .assert_success();
+    root.call(
+        pool.account_id(),
+        "mft_register",
+        &json!({
+            "token_id": ":0".to_string(),
+            "account_id": farming_id()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        to_yocto("1")
+    ).assert_success();
 
     mint_token(&token1, &farmer1, u128::MAX);
     mint_token(&token2, &farmer1, u128::MAX);
-    call!(
-        farmer1,
-        pool.storage_deposit(None, None),
-        deposit = to_yocto("1")
-    )
-    .assert_success();
+    farmer1.call(
+        pool.account_id(),
+        "storage_deposit",
+        &json!({}).to_string().into_bytes(),
+        DEFAULT_GAS,
+        to_yocto("1")
+    ).assert_success();
     call!(
         farmer1,
         token1.ft_transfer_call(to_va(swap()), U128(to_yocto("1")), None, "".to_string()),
@@ -134,12 +152,17 @@ fn seed_amount_huge() {
         deposit = 1
     )
     .assert_success();
-    call!(
-        farmer1,
-        pool.add_liquidity(0, vec![U128(to_yocto("1")), U128(to_yocto("1"))], None),
-        deposit = to_yocto("0.01")
-    )
-    .assert_success();
+
+    farmer1.call(
+        pool.account_id(),
+        "add_liquidity",
+        &json!({
+            "pool_id": 0,
+            "amounts": vec![U128(to_yocto("1")), U128(to_yocto("1"))]
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        to_yocto("0.01")
+    ).assert_success();
 
     call!(
         farmer1,
@@ -153,13 +176,17 @@ fn seed_amount_huge() {
         deposit = 1
     )
     .assert_success();
-    call!(
-        farmer1,
-        pool.add_liquidity(0, vec![U128(to_yocto("340282366920937")), U128(to_yocto("340282366920937"))], None),
-        deposit = to_yocto("0.01")
-    )
-    .assert_success();
 
+    farmer1.call(
+        pool.account_id(),
+        "add_liquidity",
+        &json!({
+            "pool_id": 0,
+            "amounts": vec![U128(to_yocto("340282366920937")), U128(to_yocto("340282366920937"))]
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        to_yocto("0.01")
+    ).assert_success();
 
     let farming = deploy_farming(&root, farming_id(), owner.account_id());
     call!(farmer1, farming.storage_deposit(None, None), deposit = to_yocto("1")).assert_success();
@@ -190,13 +217,20 @@ fn seed_amount_huge() {
     .assert_success();
     let farm_info = show_farminfo(&farming, farm_id.clone(), false);
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), U128(to_yocto("340282366920938")), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("340282366920938").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
-    
 
     assert!(root.borrow_runtime_mut().produce_blocks(60).is_ok());
     let farm_info = show_farminfo(&farming, farm_id.clone(), false);

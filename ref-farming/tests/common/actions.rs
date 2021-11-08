@@ -1,14 +1,15 @@
 
 use near_sdk::json_types::{U128};
 use near_sdk::{Balance};
-use near_sdk_sim::{call, to_yocto, ContractAccount, UserAccount};
+use near_sdk_sim::{call, to_yocto, ContractAccount, UserAccount, DEFAULT_GAS};
 
 // use near_sdk_sim::transaction::ExecutionStatus;
-use ref_exchange::{ContractContract as TestRef};
 use test_token::ContractContract as TestToken;
 use ref_farming::{ContractContract as Farming};
 use ref_farming::{HRSimpleFarmTerms};
 use near_sdk::serde_json::Value;
+use near_sdk::serde_json::json;
+
 
 use super::init::*;
 use super::utils::*;
@@ -19,18 +20,42 @@ pub(crate) fn prepair_pool_and_liquidity(
     owner: &UserAccount,
     farming_id: String,
     lps: Vec<&UserAccount>,
-) -> (ContractAccount<TestRef>, ContractAccount<TestToken>, ContractAccount<TestToken>) {
+) -> (UserAccount, ContractAccount<TestToken>, ContractAccount<TestToken>) {
     let pool = deploy_pool(&root, swap(), owner.account_id());
     let token1 = deploy_token(&root, dai(), vec![swap()]);
     let token2 = deploy_token(&root, eth(), vec![swap()]);
-    call!(owner, pool.extend_whitelisted_tokens(vec![to_va(dai()), to_va(eth())]))
-    .assert_success();
-    call!(root,
-        pool.add_simple_pool(vec![to_va(dai()), to_va(eth())], 25),
-        deposit = to_yocto("1")
+    owner.call(
+        pool.account_id(),
+        "extend_whitelisted_tokens",
+        &json!({
+            "tokens": vec![to_va(dai()), to_va(eth())]
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        0
     ).assert_success();
-    call!(root, pool.mft_register(":0".to_string(), to_va(farming_id)), deposit = to_yocto("1"))
-    .assert_success();
+
+    root.call(
+        pool.account_id(),
+        "add_simple_pool",
+        &json!({
+            "tokens": vec![to_va(dai()), to_va(eth())],
+            "fee": 25
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        to_yocto("1")
+    ).assert_success();
+
+    root.call(
+        pool.account_id(),
+        "mft_register",
+        &json!({
+            "token_id": ":0".to_string(),
+            "account_id": farming_id
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        to_yocto("1")
+    ).assert_success();
+
     for lp in lps {
         add_liqudity(lp, &pool, &token1, &token2, 0);
     }
@@ -41,20 +66,31 @@ pub(crate) fn prepair_pool_and_liquidity(
 pub(crate) fn prepair_pool(
     root: &UserAccount, 
     owner: &UserAccount, 
-) -> (ContractAccount<TestRef>, ContractAccount<TestToken>, ContractAccount<TestToken>) {
+) -> (UserAccount, ContractAccount<TestToken>, ContractAccount<TestToken>) {
     let pool = deploy_pool(&root, swap(), owner.account_id());
     let token1 = deploy_token(&root, dai(), vec![swap()]);
     let token2 = deploy_token(&root, eth(), vec![swap()]);
-    call!(
-        owner,
-        pool.extend_whitelisted_tokens(vec![to_va(dai()), to_va(eth())])
+    owner.call(
+        pool.account_id(),
+        "extend_whitelisted_tokens",
+        &json!({
+            "tokens": vec![to_va(dai()), to_va(eth())]
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        0
     );
-    call!(
-        root,
-        pool.add_simple_pool(vec![to_va(dai()), to_va(eth())], 25),
-        deposit = to_yocto("1")
-    )
-    .assert_success();
+
+    root.call(
+        pool.account_id(),
+        "add_simple_pool",
+        &json!({
+            "tokens": vec![to_va(dai()), to_va(eth())],
+            "fee": 25
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        to_yocto("1")
+    ).assert_success();
+
     (pool, token1, token2)
 }
 
@@ -166,19 +202,22 @@ pub(crate) fn prepair_multi_farms(
 
 pub(crate) fn add_liqudity(
     user: &UserAccount, 
-    pool: &ContractAccount<TestRef>, 
+    pool: &UserAccount,
     token1: &ContractAccount<TestToken>, 
     token2: &ContractAccount<TestToken>, 
     pool_id: u64,
 ) {
     mint_token(&token1, user, to_yocto("105"));
     mint_token(&token2, user, to_yocto("105"));
-    call!(
-        user,
-        pool.storage_deposit(None, None),
-        deposit = to_yocto("1")
-    )
-    .assert_success();
+
+    user.call(
+        pool.account_id(),
+        "storage_deposit",
+        &json!({}).to_string().into_bytes(),
+        DEFAULT_GAS,
+        to_yocto("1")
+    ).assert_success();
+
     call!(
         user,
         token1.ft_transfer_call(to_va(swap()), to_yocto("100").into(), None, "".to_string()),
@@ -191,12 +230,17 @@ pub(crate) fn add_liqudity(
         deposit = 1
     )
     .assert_success();
-    call!(
-        user,
-        pool.add_liquidity(pool_id, vec![U128(to_yocto("100")), U128(to_yocto("100"))], None),
-        deposit = to_yocto("0.01")
-    )
-    .assert_success();
+
+    user.call(
+        pool.account_id(),
+        "add_liquidity",
+        &json!({
+            "pool_id": pool_id,
+            "amounts": vec![U128(to_yocto("100")), U128(to_yocto("100"))]
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        to_yocto("0.01")
+    ).assert_success();
 }
 
 pub(crate) fn mint_token(token: &ContractAccount<TestToken>, user: &UserAccount, amount: Balance) {

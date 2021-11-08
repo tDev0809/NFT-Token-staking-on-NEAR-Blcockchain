@@ -1,8 +1,10 @@
-use near_sdk_sim::{call, init_simulator, to_yocto};
+use near_sdk_sim::{call, init_simulator, to_yocto, DEFAULT_GAS};
 
 use crate::common::utils::*;
 use crate::common::views::*;
 use crate::common::actions::*;
+use near_sdk::serde_json::json;
+
 
 mod common;
 
@@ -25,11 +27,20 @@ fn lpt_stake_unstake() {
 
     call!(farmer1, farming.storage_deposit(None, None), deposit = to_yocto("1"))
     .assert_success();
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
-    );
+
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
+        );
+
     out_come.assert_success();
     let user_seeds = show_userseeds(&farming, farmer1.account_id(), false);
     assert_eq!(user_seeds.get(&String::from("swap@0")).unwrap().0, to_yocto("1"));
@@ -45,21 +56,37 @@ fn lpt_stake_unstake() {
     assert!(user_seeds.get(&String::from("swap@0")).is_none());
     
     assert!(root.borrow_runtime_mut().produce_blocks(120).is_ok());
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     let user_seeds = show_userseeds(&farming, farmer1.account_id(), false);
     assert_eq!(user_seeds.get(&String::from("swap@0")).unwrap().0, to_yocto("0.5"));
     
     assert!(root.borrow_runtime_mut().produce_blocks(60).is_ok());
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     let user_seeds = show_userseeds(&farming, farmer1.account_id(), false);
     assert_eq!(user_seeds.get(&String::from("swap@0")).unwrap().0, to_yocto("1"));
@@ -85,11 +112,20 @@ fn lpt_stake_unstake() {
     assert!(user_seeds.get(&String::from("swap@0")).is_none());
 
     assert!(root.borrow_runtime_mut().produce_blocks(60).is_ok());
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     let user_seeds = show_userseeds(&farming, farmer1.account_id(), false);
     assert_eq!(user_seeds.get(&String::from("swap@0")).unwrap().0, to_yocto("1"));
