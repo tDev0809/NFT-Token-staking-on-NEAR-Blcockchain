@@ -25,7 +25,7 @@ near call --accountId dev-1636016829431-36818695401642 dev-1636016829431-3681869
 
 ### Create farm
 ```
-near call --accountId dev-1636016829431-36818695401642 dev-1636016829431-36818695401642 create_simple_farm '{"terms":{"seed_id":"dev-1631277489384-75412609538902$1","reward_token":"dev-1631277489384-75412609538902","start_at":0,"reward_per_session":"1000000000000000000","session_interval":60},"nft_multiplier":{"paras-token-v1.testnet@194":10000,"paras-token-v1.testnet@177":1000,"paras-comic-dev.testnet@6": 100}}' --depositYocto 9380000000000000000000
+near call --accountId dev-1636459082481-66040356394961 dev-1636459082481-66040356394961 create_simple_farm '{"terms":{"seed_id":"dev-1631277489384-75412609538902$1","reward_token":"dev-1631277489384-75412609538902","start_at":0,"reward_per_session":"1000000000000000000","session_interval":60},"nft_multiplier":{"paras-token-v1.testnet@194":10000,"paras-token-v1.testnet@177":1000,"paras-comic-dev.testnet@6": 100},"metadata":{"title":"Vitamins Pool","media":"https://cdn.paras.id/tr:w-0.8/bafybeiboxzb5qzwuvkw4vlcubc6sd5vfu532qr6nomzj2dgq7pigh5jfay"}}' --depositYocto 19380000000000000000000
 ```
 
 ### View farm
@@ -97,6 +97,11 @@ near view dev-1636016829431-36818695401642 list_rewards '{"account_id":"cymac.te
 ### Withdraw reward
 ```
 near call --accountId cymac.testnet dev-1636016829431-36818695401642 withdraw_reward '{"token_id":"dev-1631277489384-75412609538902"}' --depositYocto 1 --gas 300000000000000
+```
+
+### Claim and withdraw reward
+```
+near call --accountId cymac.testnet dev-1636459082481-66040356394961 claim_reward_by_farm_and_withdraw '{"farm_id":"dev-1631277489384-75412609538902$1#0"}' --depositYocto 1 --gas 300000000000000
 ```
 
 
