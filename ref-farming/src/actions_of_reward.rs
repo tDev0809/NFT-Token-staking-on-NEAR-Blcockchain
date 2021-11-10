@@ -55,6 +55,16 @@ impl Contract {
         self.internal_withdraw_reward(token_id, None);
     }
 
+    #[payable]
+    pub fn claim_reward_by_seed_and_withdraw(&mut self, seed_id: SeedId, token_id: String) {
+        assert_one_yocto();
+        let sender_id = env::predecessor_account_id();
+        self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
+        self.assert_storage_usage(&sender_id);
+
+        self.internal_withdraw_reward(token_id, None);
+    }
+
     /// Withdraws given reward token of given user.
     #[payable]
     pub fn withdraw_reward(&mut self, token_id: ValidAccountId, amount: Option<U128>) {

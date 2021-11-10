@@ -104,6 +104,10 @@ near call --accountId cymac.testnet dev-1636016829431-36818695401642 withdraw_re
 near call --accountId cymac.testnet dev-1636459082481-66040356394961 claim_reward_by_farm_and_withdraw '{"farm_id":"dev-1631277489384-75412609538902$1#0"}' --depositYocto 1 --gas 300000000000000
 ```
 
+### Claim and withdraw reward by seed
+```
+near call --accountId cymac.testnet dev-1636459082481-66040356394961 claim_reward_by_seed_and_withdraw '{"seed_id":"dev-1631277489384-75412609538902$1","token_id":"dev-1631277489384-75412609538902"}' --depositYocto 1 --gas 300000000000000
+```
 
 
 # Ref Finance Contracts
