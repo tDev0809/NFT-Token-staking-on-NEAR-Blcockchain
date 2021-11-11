@@ -28,6 +28,7 @@ pub const MIN_FARMER_LENGTH: u128 = MAX_ACCOUNT_LENGTH + 16 + 4 * 3;
 #[derive(BorshSerialize, BorshDeserialize)]
 #[cfg_attr(feature = "test", derive(Clone))]
 pub struct Farmer {
+    pub farmer_id: AccountId,
     /// Native NEAR amount sent to this contract.
     /// Used for storage.
     pub amount: Balance,
@@ -134,8 +135,8 @@ impl Farmer {
         if let Some(nft_contract_seed) = self.nft_seeds.get_mut(seed_id) {
             nft_contract_seed.insert(&contract_nft_token_id);
         } else {
-            let mut new_nft_contract_seeds = UnorderedSet::new(StorageKeys::AccountNFTContractId {
-                account_nft_contract_id: nft_contract_id.clone()
+            let mut new_nft_contract_seeds = UnorderedSet::new(StorageKeys::AccountSeedId {
+                account_seed_id: format!("{}:{}", self.farmer_id, seed_id)
             });
             new_nft_contract_seeds.insert(&contract_nft_token_id);
             self.nft_seeds.insert(seed_id.clone(), new_nft_contract_seeds);
@@ -207,6 +208,7 @@ impl VersionedFarmer {
 
     pub fn new(farmer_id: AccountId, amount: Balance) -> Self {
         VersionedFarmer::V101(Farmer {
+            farmer_id: farmer_id.clone(),
             amount: amount,
             rewards: HashMap::new(),
             seeds: HashMap::new(),

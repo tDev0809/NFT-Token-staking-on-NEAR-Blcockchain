@@ -44,11 +44,36 @@ impl Contract {
         self.assert_storage_usage(&sender_id);
     }
 
+    #[payable]
+    pub fn claim_reward_by_farm_and_withdraw(&mut self, farm_id: FarmId) {
+        assert_one_yocto();
+        let sender_id = env::predecessor_account_id();
+        self.internal_claim_user_reward_by_farm_id(&sender_id, &farm_id);
+        self.assert_storage_usage(&sender_id);
+
+        let token_id = self.get_farm(farm_id).unwrap().reward_token;
+        self.internal_withdraw_reward(token_id, None);
+    }
+
+    #[payable]
+    pub fn claim_reward_by_seed_and_withdraw(&mut self, seed_id: SeedId, token_id: String) {
+        assert_one_yocto();
+        let sender_id = env::predecessor_account_id();
+        self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
+        self.assert_storage_usage(&sender_id);
+
+        self.internal_withdraw_reward(token_id, None);
+    }
+
     /// Withdraws given reward token of given user.
     #[payable]
     pub fn withdraw_reward(&mut self, token_id: ValidAccountId, amount: Option<U128>) {
         assert_one_yocto();
 
+        self.internal_withdraw_reward(token_id.to_string(), amount);
+    }
+
+    fn internal_withdraw_reward(&mut self, token_id: AccountId, amount: Option<U128>) {
         let token_id: AccountId = token_id.into();
         let amount: u128 = amount.unwrap_or(U128(0)).into(); 
 

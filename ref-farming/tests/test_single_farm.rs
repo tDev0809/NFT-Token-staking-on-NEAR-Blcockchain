@@ -1,4 +1,4 @@
-use near_sdk_sim::{call, init_simulator, to_yocto, view};
+use near_sdk_sim::{call, init_simulator, to_yocto, view, DEFAULT_GAS};
 use near_sdk::json_types::{U128};
 use near_sdk::serde_json::Value;
 
@@ -8,6 +8,7 @@ use crate::common::utils::*;
 use crate::common::init::deploy_farming;
 use crate::common::views::*;
 use crate::common::actions::*;
+use near_sdk::serde_json::json;
 
 mod common;
 
@@ -77,11 +78,20 @@ fn single_farm_startat_0() {
 
     // farmer1 staking lpt 
     println!("----->> Farmer1 staking lpt.");
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     println!("<<----- Farmer1 staked liquidity at #{}, ts:{}.", 
     root.borrow_runtime().current_block().block_height, 
@@ -107,13 +117,22 @@ fn single_farm_startat_0() {
 
     // farmer2 staking lpt 
     println!("----->> Farmer2 staking lpt.");
-    let out_come = call!(
-        farmer2,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+
+    let out_come = farmer2.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
-    println!("<<----- Farmer2 staked liquidity at #{}, ts:{}.", 
+    println!("<<----- Farmer2 staked liquidity at #{}, ts:{}.",
     root.borrow_runtime().current_block().block_height, 
     root.borrow_runtime().current_block().block_timestamp);
     let farm_info = show_farminfo(&farming, farm_id.clone(), false);
@@ -302,11 +321,19 @@ fn single_farm_startat_0() {
     assert_eq!(unclaim.0, to_yocto("0"));
     let unclaim = show_unclaim(&farming, farmer2.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, to_yocto("0"));
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     println!("<<----- Farmer1 staked liquidity at #{}, ts:{}.", 
     root.borrow_runtime().current_block().block_height, 
@@ -338,11 +365,19 @@ fn single_farm_startat_0() {
     assert_eq!(unclaim.0, to_yocto("1"));
     let unclaim = show_unclaim(&farming, farmer2.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, to_yocto("0"));
-    let out_come = call!(
-        farmer2,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer2.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     println!("<<----- Farmer2 staked liquidity at #{}, ts:{}.", 
     root.borrow_runtime().current_block().block_height, 
@@ -469,10 +504,17 @@ fn single_farm_startat_180() {
     root.borrow_runtime().current_block().block_timestamp);
     let farm_info = show_farminfo(&farming, farm_id.clone(), false);
     assert_farming(&farm_info, "Running".to_string(), to_yocto("5.1"), 1, 0, 0, to_yocto("1"), 0);
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
     out_come.assert_success();
     println!("<<----- Farmer1 staked liquidity at #{}, ts:{}.", 

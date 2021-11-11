@@ -1,4 +1,4 @@
-use near_sdk_sim::{call, init_simulator, to_yocto};
+use near_sdk_sim::{call, init_simulator, to_yocto, DEFAULT_GAS};
 use near_sdk::json_types::{U128};
 use ref_farming::{HRSimpleFarmTerms};
 
@@ -6,6 +6,7 @@ use crate::common::utils::*;
 use crate::common::init::deploy_farming;
 use crate::common::views::*;
 use crate::common::actions::*;
+use near_sdk::serde_json::json;
 
 mod common;
 
@@ -35,11 +36,19 @@ fn failure_e10_stake_before_register() {
     out_come.assert_success();
 
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), U128(to_yocto("0.5")), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     let ex_status = format!("{:?}", out_come.promise_errors()[0].as_ref().unwrap().status());
     assert!(ex_status.contains("E10: account not registered"));
@@ -227,11 +236,19 @@ fn failure_e11_stake() {
     );
     out_come.assert_success();
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     let ex_status = format!("{:?}", out_come.promise_errors()[0].as_ref().unwrap().status());
     assert!(ex_status.contains("E11: insufficient $NEAR storage deposit"));
@@ -281,11 +298,19 @@ fn failure_e11_claim() {
     )
     .assert_success();
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
 
     call!(farmer1, farming.storage_withdraw(None), deposit = 1).assert_success();
@@ -359,11 +384,19 @@ fn failure_e12_e13() {
     )
     .assert_success();
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
 
 
@@ -453,11 +486,19 @@ fn failure_e21_e22() {
     )
     .assert_success();
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
 
 
@@ -546,11 +587,19 @@ fn failure_e25_withdraw_reward() {
     )
     .assert_success();
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
 
 
@@ -661,11 +710,19 @@ fn failure_e31_unstake_seed() {
     );
     out_come.assert_success();
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
 
 
@@ -691,13 +748,21 @@ fn failure_e31_stake_seed() {
 
     let farming = deploy_farming(&root, farming_id(), owner.account_id());
     call!(farmer1, farming.storage_deposit(None, None), deposit = to_yocto("1")).assert_success();
-    
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     let ex_status = format!("{:?}", out_come.promise_errors()[0].as_ref().unwrap().status());
     assert!(ex_status.contains("E31: seed not exist"));
@@ -729,12 +794,19 @@ fn failure_e32_unstake_over_balance() {
     );
     out_come.assert_success();
 
-
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), U128(to_yocto("0.5")), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     let out_come = call!(
         farmer1,
@@ -805,10 +877,17 @@ fn failure_e34_stake_below_minimum() {
     );
     out_come.assert_success();
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.0000001").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.0000001").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
     out_come.assert_success();
     let ex_status = format!("{:?}", out_come.promise_errors()[0].as_ref().unwrap().status());
@@ -907,10 +986,17 @@ fn failure_e42_when_force_clean_farm() {
 
     // farmer1 staking lpt 
     println!("----->> Farmer1 staking lpt.");
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
     out_come.assert_success();
 
@@ -973,10 +1059,17 @@ fn failure_e42_when_claim_reward() {
 
     // farmer1 staking lpt 
     println!("----->> Farmer1 staking lpt.");
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
     out_come.assert_success();
 
@@ -1033,11 +1126,19 @@ fn failure_e42_when_remove_user_rps_and_view_unclaim_reward() {
 
     // farmer1 staking lpt 
     println!("----->> Farmer1 staking lpt.");
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
 
     // should panic when remove_user_rps_by_farm
@@ -1103,10 +1204,17 @@ fn failure_e43() {
 
     // farmer1 staking lpt 
     println!("----->> Farmer1 staking lpt.");
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
     out_come.assert_success();
 

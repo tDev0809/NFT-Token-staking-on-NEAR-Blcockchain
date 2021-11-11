@@ -1,4 +1,4 @@
-use near_sdk_sim::{call, init_simulator, to_yocto, view};
+use near_sdk_sim::{call, init_simulator, to_yocto, view, DEFAULT_GAS};
 use near_sdk::json_types::{U128};
 use near_sdk::serde_json::Value;
 
@@ -8,6 +8,7 @@ use crate::common::utils::*;
 use crate::common::views::*;
 use crate::common::actions::*;
 use crate::common::init::deploy_farming;
+use near_sdk::serde_json::json;
 
 mod common;
 
@@ -26,10 +27,17 @@ fn multi_farm_in_single_seed() {
 
     // farmer add liqidity 
     add_liqudity(&farmer, &pool, &token1, &token2, 0);
+    let mft_balance: U128 = pool.view(
+            pool.account_id(),
+            "mft_balance_of",
+            &json!({
+                "token_id": ":0".to_string(),
+                "account_id": farmer.account_id.clone()
+            }).to_string().into_bytes(),
+        ).unwrap_json();
+
     assert_eq!(
-        view!(pool.mft_balance_of(":0".to_string(), to_va(farmer.account_id.clone())))
-            .unwrap_json::<U128>()
-            .0,
+        mft_balance.0,
         to_yocto("1")
     );
     println!("----->> Liquidity added by farmer.");
@@ -40,17 +48,32 @@ fn multi_farm_in_single_seed() {
     println!("----->> Farm till {} is ready.", farm_id.clone());
 
     // register LP token to farming contract
-    call!(root, pool.mft_register(":0".to_string(), to_va(farming_id())), deposit = to_yocto("1"))
-    .assert_success();
+    root.call(
+        pool.account_id(),
+        "mft_register",
+        &json!({
+            "token_id": ":0".to_string(),
+            "account_id": farming_id()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        to_yocto("1")
+    ).assert_success();
     println!("----->> Registered LP 0 to {}.", farming_id());
     // register farmer to farming contract and stake liquidity token
     call!(farmer, farming.storage_deposit(None, None), deposit = to_yocto("1"))
     .assert_success();
     println!("----->> Registered farmer to {}.", farming_id());
-    let out_come = call!(
-        farmer,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
     out_come.assert_success();
     // println!("{:#?}", out_come.promise_results());
@@ -118,10 +141,17 @@ fn multi_farm_in_single_seed() {
     // add lptoken
     println!();
     println!("********** Farmer add seed ************");
-    let out_come = call!(
-        farmer,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
     out_come.assert_success();
     println!("\ntokens_burnt: {} Near", (out_come.tokens_burnt()) as f64 / 1e24);
@@ -152,10 +182,17 @@ fn multi_farm_with_different_state() {
 
     // farmer add liqidity 
     add_liqudity(&farmer, &pool, &token1, &token2, 0);
+    let mft_balance: U128 = root.view(
+        pool.account_id(),
+        "mft_balance_of",
+        &json!({
+            "token_id": ":0".to_string(),
+            "account_id": farmer.account_id.clone()
+        }).to_string().into_bytes()
+    ).unwrap_json();
+
     assert_eq!(
-        view!(pool.mft_balance_of(":0".to_string(), to_va(farmer.account_id.clone())))
-            .unwrap_json::<U128>()
-            .0,
+        mft_balance.0,
         to_yocto("1")
     );
     println!("----->> Liquidity added by farmer.");
@@ -248,16 +285,31 @@ fn multi_farm_with_different_state() {
     println!("    Farm {} deposit reward at Height#{}", farm2_id.clone(), root.borrow_runtime().current_block().block_height);
 
     println!("---->> Registering LP 0 for {}.", farming_id());
-    call!(root, pool.mft_register(":0".to_string(), to_va(farming_id())), deposit = to_yocto("1"))
-    .assert_success();
+    root.call(
+        pool.account_id(),
+        "mft_register",
+        &json!({
+            "token_id": ":0".to_string(),
+            "account_id": farming_id()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        to_yocto("1")
+    ).assert_success();
 
     println!("---->> Step01: Farmer register and stake liquidity token.");
     call!(farmer, farming.storage_deposit(None, None), deposit = to_yocto("1"))
     .assert_success();
-    let out_come = call!(
-        farmer,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("1").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("1").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
     out_come.assert_success();
     // println!("{:#?}", out_come.promise_results());

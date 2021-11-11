@@ -1,4 +1,4 @@
-use near_sdk_sim::{view, call, init_simulator, to_yocto};
+use near_sdk_sim::{view, call, init_simulator, to_yocto, DEFAULT_GAS};
 // use near_sdk::json_types::{U128};
 use near_sdk::serde_json::Value;
 use ref_farming::{HRSimpleFarmTerms};
@@ -7,6 +7,7 @@ use crate::common::utils::*;
 use crate::common::init::deploy_farming;
 use crate::common::views::*;
 use crate::common::actions::*;
+use near_sdk::serde_json::json;
 
 mod common;
 
@@ -89,11 +90,19 @@ fn storage_stake() {
     );
     out_come.assert_success();
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     let ex_status = format!("{:?}", out_come.promise_errors()[0].as_ref().unwrap().status());
     assert!(ex_status.contains("E11: insufficient $NEAR storage deposit"));
@@ -106,11 +115,19 @@ fn storage_stake() {
     assert_eq!(sb.total.0, to_yocto("1.00092"));
     assert_eq!(sb.available.0, to_yocto("1"));
 
-    let out_come = call!(
-        farmer1,
-        pool.mft_transfer_call(":0".to_string(), to_va(farming_id()), to_yocto("0.5").into(), None, "".to_string()),
-        deposit = 1
+    let out_come = farmer1.call(
+        pool.account_id(),
+        "mft_transfer_call",
+        &json!({
+            "token_id": ":0".to_string(),
+            "receiver_id": farming_id(),
+            "amount": to_yocto("0.5").to_string(),
+            "msg": "".to_string()
+        }).to_string().into_bytes(),
+        DEFAULT_GAS,
+        1
     );
+
     out_come.assert_success();
     let user_seeds = show_userseeds(&farming, farmer1.account_id(), false);
     assert_eq!(user_seeds.get(&String::from("swap@0")).unwrap().0, to_yocto("0.5"));
