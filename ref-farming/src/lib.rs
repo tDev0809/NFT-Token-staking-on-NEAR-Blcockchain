@@ -46,7 +46,7 @@ pub enum StorageKeys {
     Farmer,
     RewardInfo,
     UserRps { account_id: AccountId },
-    AccountNFTContractId { account_nft_contract_id: String }
+    AccountSeedId { account_seed_id: String }
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
