@@ -232,11 +232,17 @@ impl Contract {
                 self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
                 let mut farm_seed = self.get_seed(&seed_id);
                 let mut farmer = self.get_farmer(&sender_id);
+                farmer.get_ref_mut().add_seed(&seed_id, amount);
+
+                let amount_before_multiplier: u128 = farmer.get_ref().seeds_after_multiplier.get(&seed_id).unwrap_or(&0u128).clone();
+                let amount_after_multiplier: u128 = farmer.get_ref().calculate_amount_after_multiplier(farm_seed.get_ref());
 
                 farm_seed.get_ref_mut().seed_type = SeedType::MFT;
-                farm_seed.get_ref_mut().add_amount(amount);
-                farmer.get_ref_mut().add_seed(&seed_id, amount);
+                farm_seed.get_ref_mut().sub_amount(amount_before_multiplier);
+                farm_seed.get_ref_mut().add_amount(amount_after_multiplier);
                 self.data_mut().seeds.insert(&seed_id, &farm_seed);
+
+                farmer.get_ref_mut().set_seed_after_multiplier(&seed_id, amount_after_multiplier);
                 self.data_mut().farmers.insert(&sender_id, &farmer);
             },
             PromiseResult::Successful(_) => {
