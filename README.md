@@ -69,6 +69,11 @@ near call --accountId cymac.testnet paras-token-v1.testnet nft_transfer_call '{"
 near view dev-1636016829431-36818695401642 list_user_nft_seeds '{"account_id":"cymac.testnet"}'
 ```
 
+### View staked FT after multiplier
+```
+new view dev-1636016829431-36818695401642 list_user_seeds_after_multiplier '{"account_id":"cymac.testnet"}'
+```
+
 ### Unstake FT
 ```
 near call --accountId cymac.testnet dev-1636016829431-36818695401642 withdraw_seed '{"seed_id":"dev-1631277489384-75412609538902$1","amount":"10000000000000000000"}' --depositYocto 1 --gas 100000000000000
