@@ -295,10 +295,15 @@ impl Contract {
         // first claim all reward of the user for this seed farms 
         // to update user reward_per_seed in each farm 
         self.internal_claim_user_reward_by_seed_id(sender_id, seed_id);
+        let seed_contract_id: AccountId = seed_id.split(FT_INDEX_TAG).next().unwrap().to_string();
+
+        let mut farmer = self.get_farmer(sender_id);
+
+        self.private_withdraw_reward(seed_contract_id, sender_id.to_string(), None);
 
         // **** update seed (new version)
         let mut farm_seed = self.get_seed(seed_id);
-        let mut farmer = self.get_farmer(sender_id);
+
         farmer.get_ref_mut().add_seed(&seed_id, amount);
 
         let amount_before_multiplier: u128 = farmer.get_ref().seeds_after_multiplier.get(seed_id).unwrap_or(&0u128).clone();

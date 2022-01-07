@@ -73,12 +73,19 @@ impl Contract {
         self.internal_withdraw_reward(token_id.to_string(), amount);
     }
 
+    #[private]
+    pub fn private_withdraw_reward(&mut self, token_id: AccountId, sender_id: AccountId, amount: Option<U128>) {
+        self.internal_execute_withdraw_reward(token_id, sender_id, amount);
+    }
+
     fn internal_withdraw_reward(&mut self, token_id: AccountId, amount: Option<U128>) {
-        let token_id: AccountId = token_id.into();
-        let amount: u128 = amount.unwrap_or(U128(0)).into(); 
-
         let sender_id = env::predecessor_account_id();
+        self.internal_execute_withdraw_reward(token_id, sender_id, amount);
+    }
 
+    fn internal_execute_withdraw_reward(&mut self, token_id: AccountId, sender_id: AccountId, amount: Option<U128>) {
+        let token_id: AccountId = token_id.into();
+        let amount: u128 = amount.unwrap_or(U128(0)).into();
         let mut farmer = self.get_farmer(&sender_id);
 
         // Note: subtraction, will be reverted if the promise fails.
@@ -92,14 +99,14 @@ impl Contract {
             1,
             GAS_FOR_FT_TRANSFER,
         )
-        .then(ext_self::callback_post_withdraw_reward(
-            token_id,
-            sender_id,
-            amount.into(),
-            &env::current_account_id(),
-            0,
-            GAS_FOR_RESOLVE_TRANSFER,
-        ));
+            .then(ext_self::callback_post_withdraw_reward(
+                token_id,
+                sender_id,
+                amount.into(),
+                &env::current_account_id(),
+                0,
+                GAS_FOR_RESOLVE_TRANSFER,
+            ));
     }
 
     #[private]
