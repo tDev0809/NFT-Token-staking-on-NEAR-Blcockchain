@@ -39,6 +39,9 @@ impl FungibleTokenReceiver for Contract {
 
             // if seed not exist, it will panic
             let seed_farm = self.get_seed(&env::predecessor_account_id());
+
+            assert_eq!(seed_farm.get_ref().seed_type, SeedType::FT, "Cannot deposit FT to this seed");
+
             if amount < seed_farm.get_ref().min_deposit {
                 env::panic(
                     format!(
@@ -212,6 +215,9 @@ impl MFTTokenReceiver for Contract {
         // if seed not exist, it will panic
         let amount: u128 = amount.into();
         let seed_farm = self.get_seed(&seed_id);
+
+        assert_eq!(seed_farm.get_ref().seed_type, SeedType::MFT, "Cannot deposit MFT to this seed");
+
         if amount < seed_farm.get_ref().min_deposit {
             env::panic(
                 format!(

@@ -36,12 +36,10 @@ pub struct Farmer {
     pub rewards: HashMap<AccountId, Balance>,
     /// Amounts of various seed tokens the farmer staked.
     pub seeds: HashMap<SeedId, Balance>,
-    pub seeds_after_multiplier: HashMap<SeedId, Balance>,
     /// record user_last_rps of farms
     pub user_rps: LookupMap<FarmId, RPS>,
     pub rps_count: u32,
     pub nft_seeds: HashMap<SeedId, UnorderedSet<ContractNFTTokenId>>,
-    pub current_nft_multiplier: HashMap<SeedId, u32>,
 }
 
 impl Farmer {
@@ -92,13 +90,6 @@ impl Farmer {
             self.seeds.remove(seed_id);
         }
         cur_balance
-    }
-
-    pub fn set_seed_after_multiplier(&mut self, seed_id: &SeedId, amount: Balance) {
-        self.seeds_after_multiplier.insert(
-            seed_id.clone(),
-            amount
-        );
     }
 
     pub fn get_rps(&self, farm_id: &FarmId) -> RPS {
@@ -158,39 +149,20 @@ impl Farmer {
         }
     }
 
-    pub fn update_farmer_multiplier(
-        &mut self,
+    pub fn get_nft_balance_equivalent(
+        &self,
         seed: &FarmSeed,
-        nft_staked: ContractNFTTokenId,
-        is_stake: bool,
-    ) -> u32 {
+        nft_staked: ContractNFTTokenId
+    ) -> Balance {
         // split x.paras.near@1:1
         // to "x.paras.near@1", ":1"
-        let mut current_multiplier: u32 = *self.current_nft_multiplier.get(&seed.seed_id).unwrap_or(&0u32);
-        if let Some(nft_multiplier) = &seed.nft_multiplier {
+        return if let Some(nft_balance) = &seed.nft_balance {
             let contract_token_series_id_split: Vec<&str> = nft_staked.split(PARAS_SERIES_DELIMETER).collect();
-            let multiply: u32 = *nft_multiplier.get(&contract_token_series_id_split[0].to_string()).unwrap_or(&0);
-            if is_stake {
-                current_multiplier += multiply;
-            } else {
-                current_multiplier -= multiply;
-            }
+            *nft_balance.get(&contract_token_series_id_split[0].to_string()).unwrap_or(&0)
         } else {
-            return 0;
+            0
         }
-
-        self.current_nft_multiplier.insert(seed.seed_id.clone(), current_multiplier);
-
-        return current_multiplier;
     }
-
-    pub fn calculate_amount_after_multiplier(&self, seed: &FarmSeed) -> u128{
-        let current_multiplier: u32 = *self.current_nft_multiplier.get(&seed.seed_id).unwrap_or(&0u32);
-        let seed_amount = *self.seeds.get(&seed.seed_id).unwrap_or(&0u128);
-
-        return seed_amount + seed_amount / 10000 * current_multiplier as u128;
-    }
-
 
 }
 
@@ -217,8 +189,6 @@ impl VersionedFarmer {
             }),
             rps_count: 0,
             nft_seeds: HashMap::new(),
-            seeds_after_multiplier: HashMap::new(),
-            current_nft_multiplier: HashMap::new(),
         })
     }
 
