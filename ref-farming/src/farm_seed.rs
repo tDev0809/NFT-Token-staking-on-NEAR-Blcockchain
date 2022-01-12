@@ -47,7 +47,7 @@ pub struct FarmSeed {
     /// total (staked) balance of this seed (Farming Token)
     pub amount: Balance,
     pub min_deposit: Balance,
-    pub nft_balance: Option<HashMap<NFTTokenId, Balance>>,
+    pub nft_balance: Option<HashMap<NFTTokenId, U128>>,
     pub metadata: Option<FarmSeedMetadata>
 }
 
@@ -55,7 +55,7 @@ impl FarmSeed {
     pub fn new(
         seed_id: &SeedId,
         min_deposit: Balance,
-        nft_balance: Option<HashMap<NFTTokenId, Balance>>,
+        nft_balance: Option<HashMap<NFTTokenId, U128>>,
         metadata: Option<FarmSeedMetadata>
     ) -> Self {
         let (token_id, token_index) = parse_seed_id(seed_id);
@@ -106,7 +106,7 @@ impl VersionedFarmSeed {
     pub fn new(
         seed_id: &SeedId,
         min_deposit: Balance,
-        nft_balance: Option<HashMap<NFTTokenId, Balance>>,
+        nft_balance: Option<HashMap<NFTTokenId, U128>>,
         metadata: Option<FarmSeedMetadata>,
     ) -> Self {
         VersionedFarmSeed::V101(FarmSeed::new(seed_id, min_deposit, nft_balance, metadata))
@@ -157,7 +157,7 @@ pub struct SeedInfo {
     pub next_index: u32,
     pub amount: U128,
     pub min_deposit: U128,
-    pub nft_balance: Option<HashMap<NFTTokenId, Balance>>,
+    pub nft_balance: Option<HashMap<NFTTokenId, U128>>,
     pub title: Option<String>,
     pub media: Option<String>
 }

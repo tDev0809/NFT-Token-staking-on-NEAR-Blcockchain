@@ -17,6 +17,7 @@ use crate::StorageKeys;
 use crate::utils::NFT_DELIMETER;
 
 use near_sdk::collections::UnorderedSet;
+use near_sdk::json_types::U128;
 use crate::farm_seed::FarmSeed;
 
 /// each entry cost MAX_ACCOUNT_LENGTH bytes,
@@ -158,7 +159,7 @@ impl Farmer {
         // to "x.paras.near@1", ":1"
         return if let Some(nft_balance) = &seed.nft_balance {
             let contract_token_series_id_split: Vec<&str> = nft_staked.split(PARAS_SERIES_DELIMETER).collect();
-            *nft_balance.get(&contract_token_series_id_split[0].to_string()).unwrap_or(&0)
+            nft_balance.get(&contract_token_series_id_split[0].to_string()).unwrap_or(&U128(0)).0
         } else {
             0
         }

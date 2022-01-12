@@ -17,7 +17,7 @@ impl Contract {
         &mut self,
           terms: HRSimpleFarmTerms,
           min_deposit: Option<U128>,
-          nft_balance: Option<HashMap<NFTTokenId, Balance>>,
+          nft_balance: Option<HashMap<NFTTokenId, U128>>,
           metadata: Option<FarmSeedMetadata>,
     ) -> FarmId {
         self.assert_owner();
@@ -53,7 +53,7 @@ impl Contract {
         &mut self,
         terms: &HRSimpleFarmTerms,
         min_deposit: Balance,
-        nft_balance: Option<HashMap<NFTTokenId, Balance>>,
+        nft_balance: Option<HashMap<NFTTokenId, U128>>,
         metadata: Option<FarmSeedMetadata>
     ) -> FarmId {
         
