@@ -38,7 +38,7 @@ pub struct FarmSeedMetadata {
 pub struct FarmSeed {
     /// The Farming Token this FarmSeed represented for
     pub seed_id: SeedId,
-    /// The seed is a FT or MFT, enum size is 2 bytes?
+    /// The seed is a FT or MFT or NFT
     pub seed_type: SeedType,
     /// all farms that accepted this seed
     /// FarmId = {seed_id}#{next_index}
@@ -60,10 +60,10 @@ impl FarmSeed {
     ) -> Self {
         let (token_id, token_index) = parse_seed_id(seed_id);
         let seed_type: SeedType;
-        if token_id == token_index {
-            seed_type = SeedType::FT;
-        } else if nft_balance.is_some() {
-            seed_type = SeedType::NFT; // If NFT, then SeedId will indicate the balance equivalent instead of adding seed with FT
+        if nft_balance.is_some() {
+            seed_type = SeedType::NFT;
+        } else if token_id == token_index {
+            seed_type = SeedType::FT; // If NFT, then SeedId will indicate the balance equivalent instead of adding seed with FT
         } else {
             seed_type = SeedType::MFT;
         }
