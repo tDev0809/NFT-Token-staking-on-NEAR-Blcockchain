@@ -326,12 +326,14 @@ impl Contract {
         nft_contract_id: &String,
         nft_token_id: &String,
     ) {
+        let mut farm_seed = self.get_seed(seed_id);
+
+        assert_eq!(farm_seed.get_ref().seed_type, SeedType::NFT, "Cannot deposit NFT to this farm");
         // first claim all reward of the user for this seed farms
         // to update user reward_per_seed in each farm
         self.internal_claim_user_reward_by_seed_id(sender_id, seed_id);
 
         let mut farmer = self.get_farmer(sender_id);
-        let mut farm_seed = self.get_seed(seed_id);
 
         let contract_nft_token_id: ContractNFTTokenId = farmer.get_ref_mut().add_nft(seed_id, nft_contract_id, nft_token_id);
         // update farmer seed
