@@ -1,7 +1,7 @@
 # Paras NFT Farming Contract
 
 This contract is based from Ref-Finance farming contract. 
-We modified the contract to use NFT as FT (seed) amount multiplier.
+We modified the contract to create a farm with staked NFT. The staked NFT will be valued as X amount of FT.
 
 ## How to compile
 ```
@@ -12,106 +12,109 @@ $ ./build_docker.sh
 ## How to use
 We have precompiled binary in res/ directory. 
 
+```
+PARAS FT testnet: dev-1631277489384-75412609538902
+```
 
 ### Deploy to testnet (dev)
-```
+```sh
 near dev-deploy --wasmFile res/ref_farming_release.wasm
 ```
 
 ### Init
-```
-near call --accountId dev-1636016829431-36818695401642 dev-1636016829431-36818695401642 new '{"owner_id":"dev-1636016829431-36818695401642"}'
+```sh
+near call --accountId dev-1641987418790-52566958498708 dev-1641987418790-52566958498708 new '{"owner_id":"dev-1641987418790-52566958498708"}'
 ```
 
-### Create farm
+### Create Farm (FT)
+```sh
+near call --accountId dev-1641987418790-52566958498708 dev-1641987418790-52566958498708 create_simple_farm '{"terms":{"seed_id":"dev-1631277489384-75412609538902","reward_token":"dev-1631277489384-75412609538902","start_at":0,"reward_per_session":"1000000000000000000","session_interval":60},"metadata":{"title":"PARAS Staking","media":"https://paras-cdn.imgix.net/bafybeidoerucqfzyazvyfm5axjixs6vie7ts2myru7g5mu2ub7tlvixpqq?w=800"}}' --depositYocto 19380000000000000000000
 ```
-near call --accountId dev-1636459082481-66040356394961 dev-1636459082481-66040356394961 create_simple_farm '{"terms":{"seed_id":"dev-1631277489384-75412609538902$1","reward_token":"dev-1631277489384-75412609538902","start_at":0,"reward_per_session":"1000000000000000000","session_interval":60},"nft_multiplier":{"paras-token-v1.testnet@194":10000,"paras-token-v1.testnet@177":1000,"paras-comic-dev.testnet@6": 100},"metadata":{"title":"Vitamins Pool","media":"https://cdn.paras.id/tr:w-0.8/bafybeiboxzb5qzwuvkw4vlcubc6sd5vfu532qr6nomzj2dgq7pigh5jfay"}}' --depositYocto 19380000000000000000000
+
+### Create farm (NFT)
+```sh
+near call --accountId dev-1641987418790-52566958498708 dev-1641987418790-52566958498708 create_simple_farm '{"terms":{"seed_id":"dev-1631277489384-75412609538902$1","reward_token":"dev-1631277489384-75412609538902","start_at":0,"reward_per_session":"1000000000000000000","session_interval":60},"nft_balance":{"paras-token-v1.testnet@194":"500000000000000000000","paras-token-v1.testnet@177":"100000000000000000000","paras-comic-dev.testnet@6":"200000000000000000000"},"metadata":{"title":"Vitamins Pool","media":"https://cdn.paras.id/tr:w-0.8/bafybeiboxzb5qzwuvkw4vlcubc6sd5vfu532qr6nomzj2dgq7pigh5jfay"}}' --depositYocto 19380000000000000000000
 ```
 
 ### View farm
-```
-near view dev-1636016829431-36818695401642 get_farm '{"farm_id":"dev-1631277489384-75412609538902$1#0"}'
+```sh
+near view dev-1641987418790-52566958498708 get_farm '{"farm_id":"dev-1631277489384-75412609538902$1#0"}'
 ```
 
 ### View seed
-```
-near view dev-1636016829431-36818695401642 get_seed_info '{"seed_id":"dev-1631277489384-75412609538902$1"}'
+```sh
+near view dev-1641987418790-52566958498708 get_seed_info '{"seed_id":"dev-1631277489384-75412609538902$1"}'
 ```
 
 ### Add reward
-```
-near call --accountId orang.testnet dev-1631277489384-75412609538902 ft_transfer_call '{"receiver_id":"dev-1636016829431-36818695401642","amount":"250000000000000000000000","msg":"dev-1631277489384-75412609538902$1#0"}' --depositYocto 1 --gas 300000000000000
+```sh
+near call --accountId orang.testnet dev-1631277489384-75412609538902 ft_transfer_call '{"receiver_id":"dev-1641987418790-52566958498708","amount":"250000000000000000000000","msg":"dev-1631277489384-75412609538902$1#0"}' --depositYocto 1 --gas 300000000000000
 ```
 
 ### Register as Farmer
-```
-near call --accountId cymac.testnet dev-1636016829431-36818695401642 storage_deposit '{"account_id":"cymac.testnet"}'
+```sh
+near call --accountId cymac.testnet dev-1641987418790-52566958498708 storage_deposit '{"account_id":"cymac.testnet"}'
 --depositYocto 18520000000000000000000
 ```
 
 ### Stake FT
-```
-near call --accountId cymac.testnet dev-1631277489384-75412609538902 ft_transfer_call '{"receiver_id":"dev-1636016829431-36818695401642","amount":"10000000000000000000","msg":"{\"transfer_type\":\"seed\",\"seed_id\":\"dev-1631277489384-75412609538902$1\"}"}' --depositYocto 1 --gas 300000000000000
+```sh
+near call --accountId cymac.testnet dev-1631277489384-75412609538902 ft_transfer_call '{"receiver_id":"dev-1641987418790-52566958498708","amount":"10000000000000000000","msg":""}' --depositYocto 1 --gas 300000000000000
 ```
 
 ### View staked FT
-```
-near view dev-1636016829431-36818695401642 list_user_seeds '{"account_id":"cymac.testnet"}'
+```sh
+near view dev-1641987418790-52566958498708 list_user_seeds '{"account_id":"cymac.testnet"}'
 ```
 
 ### Stake NFT
-```
-near call --accountId cymac.testnet paras-token-v1.testnet nft_transfer_call '{"receiver_id":"dev-1636016829431-36818695401642","token_id":"177:5","msg":"dev-1631277489384-75412609538902$1"}' --depositYocto 1 --gas 300000000000000
+```sh
+near call --accountId cymac.testnet paras-token-v1.testnet nft_transfer_call '{"receiver_id":"dev-1641987418790-52566958498708","token_id":"177:5","msg":"dev-1631277489384-75412609538902$1"}' --depositYocto 1 --gas 300000000000000
 ```
 
 ### View staked NFT
-```
-near view dev-1636016829431-36818695401642 list_user_nft_seeds '{"account_id":"cymac.testnet"}'
-```
-
-### View staked FT after multiplier
-```
-new view dev-1636016829431-36818695401642 list_user_seeds_after_multiplier '{"account_id":"cymac.testnet"}'
+```sh
+near view dev-1641987418790-52566958498708 list_user_nft_seeds '{"account_id":"cymac.testnet"}'
 ```
 
 ### Unstake FT
-```
-near call --accountId cymac.testnet dev-1636016829431-36818695401642 withdraw_seed '{"seed_id":"dev-1631277489384-75412609538902$1","amount":"10000000000000000000"}' --depositYocto 1 --gas 100000000000000
+```sh
+near call --accountId cymac.testnet dev-1641987418790-52566958498708 withdraw_seed '{"seed_id":"dev-1631277489384-75412609538902","amount":"10000000000000000000"}' --depositYocto 1 --gas 100000000000000
 ```
 
 ### Unstake NFT
-```
-near call --accountId cymac.testnet dev-1636016829431-36818695401642 withdraw_nft '{"seed_id":"dev-1631277489384-75412609538902$1","nft_contract_id":"paras-token-v1.testnet","nft_token_id":"177:5"}' --depositYocto 1 --gas 100000000000000
+```sh
+near call --accountId cymac.testnet dev-1641987418790-52566958498708 withdraw_nft '{"seed_id":"dev-1631277489384-75412609538902$1","nft_contract_id":"paras-token-v1.testnet","nft_token_id":"177:5"}' --depositYocto 1 --gas 100000000000000
 ```
 
 ### View unclaimed rewards
-```
-near view dev-1636016829431-36818695401642 get_unclaimed_reward '{"account_id":"cymac.testnet","farm_id":"dev-1631277489384-75412609538902$1#0"}'
+```sh
+near view dev-1641987418790-52566958498708 get_unclaimed_reward '{"account_id":"cymac.testnet","farm_id":"dev-1631277489384-75412609538902$1#0"}'
 ```
 
 ### Claim rewards
-```
-near call --accountId cymac.testnet dev-1636016829431-36818695401642 claim_reward_by_farm '{"farm_id":"dev-1631277489384-75412609538902$1#0"}'
+```sh
+near call --accountId cymac.testnet dev-1641987418790-52566958498708 claim_reward_by_farm '{"farm_id":"dev-1631277489384-75412609538902$1#0"}'
 ```
 
 ### List claimed rewards
-```
-near view dev-1636016829431-36818695401642 list_rewards '{"account_id":"cymac.testnet"}'
+```sh
+near view dev-1641987418790-52566958498708 list_rewards '{"account_id":"cymac.testnet"}'
 ```
 
 ### Withdraw reward
-```
-near call --accountId cymac.testnet dev-1636016829431-36818695401642 withdraw_reward '{"token_id":"dev-1631277489384-75412609538902"}' --depositYocto 1 --gas 300000000000000
+```sh
+near call --accountId cymac.testnet dev-1641987418790-52566958498708 withdraw_reward '{"token_id":"dev-1631277489384-75412609538902"}' --depositYocto 1 --gas 300000000000000
 ```
 
 ### Claim and withdraw reward
-```
-near call --accountId cymac.testnet dev-1636459082481-66040356394961 claim_reward_by_farm_and_withdraw '{"farm_id":"dev-1631277489384-75412609538902$1#0"}' --depositYocto 1 --gas 300000000000000
+```sh
+near call --accountId cymac.testnet dev-1641987418790-52566958498708 claim_reward_by_farm_and_withdraw '{"farm_id":"dev-1631277489384-75412609538902$1#0"}' --depositYocto 1 --gas 300000000000000
 ```
 
 ### Claim and withdraw reward by seed
-```
-near call --accountId cymac.testnet dev-1636459082481-66040356394961 claim_reward_by_seed_and_withdraw '{"seed_id":"dev-1631277489384-75412609538902$1","token_id":"dev-1631277489384-75412609538902"}' --depositYocto 1 --gas 300000000000000
+```sh
+near call --accountId cymac.testnet dev-1641987418790-52566958498708 claim_reward_by_seed_and_withdraw '{"seed_id":"dev-1631277489384-75412609538902$1","token_id":"dev-1631277489384-75412609538902"}' --depositYocto 1 --gas 300000000000000
 ```
 
 
