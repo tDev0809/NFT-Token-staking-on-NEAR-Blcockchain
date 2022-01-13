@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use near_sdk::collections::LookupMap;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::{env, AccountId, Balance};
-use crate::{SeedId, FarmId, RPS};
+use crate::{SeedId, FarmId, RPS, Contract};
 use crate::simple_farm::{ContractNFTTokenId, NFTTokenId};
 use crate::errors::*;
 use crate::utils::{MAX_ACCOUNT_LENGTH, PARAS_SERIES_DELIMETER};
@@ -122,8 +122,7 @@ impl Farmer {
         * env::storage_byte_cost()
     }
 
-    pub fn add_nft(&mut self, seed_id: &SeedId, nft_contract_id: &String, nft_token_id: &NFTTokenId) -> ContractNFTTokenId {
-        let contract_nft_token_id = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
+    pub fn add_nft(&mut self, seed_id: &SeedId, contract_nft_token_id: ContractNFTTokenId) {
         if let Some(nft_contract_seed) = self.nft_seeds.get_mut(seed_id) {
             nft_contract_seed.insert(&contract_nft_token_id);
         } else {
@@ -133,12 +132,9 @@ impl Farmer {
             new_nft_contract_seeds.insert(&contract_nft_token_id);
             self.nft_seeds.insert(seed_id.clone(), new_nft_contract_seeds);
         }
-
-        return contract_nft_token_id;
     }
 
-    pub fn sub_nft(&mut self, seed_id: &SeedId, nft_contract_id: &String, nft_token_id: &NFTTokenId) -> Option<ContractNFTTokenId> {
-        let contract_nft_token_id = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
+    pub fn sub_nft(&mut self, seed_id: &SeedId, contract_nft_token_id: ContractNFTTokenId ) -> Option<ContractNFTTokenId> {
         let mut nft_token_id_exist: bool = false;
         if let Some(nft_contract_seed) = self.nft_seeds.get_mut(seed_id) {
             nft_token_id_exist = nft_contract_seed.remove(&contract_nft_token_id);
@@ -149,22 +145,6 @@ impl Farmer {
             None
         }
     }
-
-    pub fn get_nft_balance_equivalent(
-        &self,
-        seed: &FarmSeed,
-        nft_staked: ContractNFTTokenId
-    ) -> Balance {
-        // split x.paras.near@1:1
-        // to "x.paras.near@1", ":1"
-        return if let Some(nft_balance) = &seed.nft_balance {
-            let contract_token_series_id_split: Vec<&str> = nft_staked.split(PARAS_SERIES_DELIMETER).collect();
-            nft_balance.get(&contract_token_series_id_split[0].to_string()).unwrap_or(&U128(0)).0
-        } else {
-            0
-        }
-    }
-
 }
 
 

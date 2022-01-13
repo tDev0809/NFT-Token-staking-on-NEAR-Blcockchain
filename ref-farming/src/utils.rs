@@ -1,9 +1,11 @@
 
 use near_sdk::json_types::{U128};
-use near_sdk::{env, ext_contract, Gas, Timestamp};
+use near_sdk::{Balance, env, ext_contract, Gas, Timestamp};
 use uint::construct_uint;
 use crate::{SeedId, FarmId};
 use crate::errors::*;
+use crate::farm_seed::FarmSeed;
+use crate::simple_farm::ContractNFTTokenId;
 
 pub type TimestampSec = u32;
 
@@ -123,3 +125,20 @@ pub(crate) fn to_sec(timestamp: Timestamp) -> TimestampSec {
     (timestamp / 10u64.pow(9)) as u32
 }
 
+pub fn get_nft_balance_equivalent(
+    seed: &FarmSeed,
+    nft_staked: ContractNFTTokenId
+) -> Option<Balance> {
+    // split x.paras.near@1:1
+    // to "x.paras.near@1", ":1"
+    return if let Some(nft_balance) = &seed.nft_balance {
+        let contract_token_series_id_split: Vec<&str> = nft_staked.split(PARAS_SERIES_DELIMETER).collect();
+        if let Some(nft_balance_equivalent) = nft_balance.get(&contract_token_series_id_split[0].to_string()) {
+            Some(nft_balance_equivalent.0)
+        } else {
+            None
+        }
+    } else {
+        None
+    }
+}

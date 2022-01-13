@@ -3,11 +3,12 @@ use std::convert::TryInto;
 use near_sdk::json_types::{U128};
 use near_sdk::{AccountId, Balance, PromiseResult};
 
-use crate::utils::{assert_one_yocto, ext_multi_fungible_token, ext_fungible_token, ext_non_fungible_token, ext_self, wrap_mft_token_id, parse_seed_id, GAS_FOR_FT_TRANSFER, GAS_FOR_RESOLVE_TRANSFER, GAS_FOR_NFT_TRANSFER, FT_INDEX_TAG};
+use crate::utils::{assert_one_yocto, ext_multi_fungible_token, ext_fungible_token, ext_non_fungible_token, ext_self, wrap_mft_token_id, parse_seed_id, GAS_FOR_FT_TRANSFER, GAS_FOR_RESOLVE_TRANSFER, GAS_FOR_NFT_TRANSFER, FT_INDEX_TAG, get_nft_balance_equivalent};
 use crate::errors::*;
 use crate::farm_seed::SeedType;
 use crate::*;
 use crate::simple_farm::{NFTTokenId, ContractNFTTokenId};
+use crate::utils::NFT_DELIMETER;
 
 #[near_bindgen]
 impl Contract {
@@ -126,16 +127,17 @@ impl Contract {
                 let mut farmer = self.get_farmer(&sender_id);
                 let mut farm_seed = self.get_seed(&seed_id);
 
-                let contract_nft_token_id: ContractNFTTokenId = farmer.get_ref_mut().add_nft(&seed_id, &nft_contract_id, &nft_token_id);
-                // update farmer seed
-                let nft_balance_equivalent: Balance = farmer.get_ref().get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id);
+                let contract_nft_token_id : ContractNFTTokenId = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
+                if let Some(nft_balance_equivalent) = get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id.clone()) {
+                    farmer.get_ref_mut().add_nft(&seed_id, contract_nft_token_id);
 
-                farmer.get_ref_mut().add_seed(&seed_id, nft_balance_equivalent);
-                self.data_mut().farmers.insert(&sender_id, &farmer);
+                    farmer.get_ref_mut().add_seed(&seed_id, nft_balance_equivalent);
+                    self.data_mut().farmers.insert(&sender_id, &farmer);
 
-                // **** update seed (new version)
-                farm_seed.get_ref_mut().add_amount(nft_balance_equivalent);
-                self.data_mut().seeds.insert(&seed_id, &farm_seed);
+                    // **** update seed (new version)
+                    farm_seed.get_ref_mut().add_amount(nft_balance_equivalent);
+                    self.data_mut().seeds.insert(&seed_id, &farm_seed);
+                }
             },
             PromiseResult::Successful(_) => {
                 env::log(
@@ -325,7 +327,7 @@ impl Contract {
         sender_id: &AccountId,
         nft_contract_id: &String,
         nft_token_id: &String,
-    ) {
+    ) -> bool {
         let mut farm_seed = self.get_seed(seed_id);
 
         assert_eq!(farm_seed.get_ref().seed_type, SeedType::NFT, "Cannot deposit NFT to this farm");
@@ -335,16 +337,21 @@ impl Contract {
 
         let mut farmer = self.get_farmer(sender_id);
 
-        let contract_nft_token_id: ContractNFTTokenId = farmer.get_ref_mut().add_nft(seed_id, nft_contract_id, nft_token_id);
         // update farmer seed
-        let nft_balance_equivalent: Balance = farmer.get_ref().get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id);
+        let contract_nft_token_id = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
+        return if let Some(nft_balance_equivalent) = get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id.clone()) {
+            farmer.get_ref_mut().add_nft(seed_id, contract_nft_token_id);
 
-        farmer.get_ref_mut().add_seed(seed_id, nft_balance_equivalent);
-        self.data_mut().farmers.insert(sender_id, &farmer);
+            farmer.get_ref_mut().add_seed(seed_id, nft_balance_equivalent);
+            self.data_mut().farmers.insert(sender_id, &farmer);
 
-        // **** update seed (new version)
-        farm_seed.get_ref_mut().add_amount(nft_balance_equivalent);
-        self.data_mut().seeds.insert(&seed_id, &farm_seed);
+            // **** update seed (new version)
+            farm_seed.get_ref_mut().add_amount(nft_balance_equivalent);
+            self.data_mut().seeds.insert(&seed_id, &farm_seed);
+            true
+        } else {
+            false
+        }
     }
 
     fn internal_nft_withdraw(
@@ -353,15 +360,16 @@ impl Contract {
         sender_id: &AccountId,
         nft_contract_id: &String,
         nft_token_id: &String
-    ) -> NFTTokenId {
+    ) -> ContractNFTTokenId {
         self.internal_claim_user_reward_by_seed_id(sender_id, seed_id);
 
         let mut farm_seed = self.get_seed(seed_id);
         let mut farmer = self.get_farmer(sender_id);
 
         // sub nft
-        let contract_nft_token_id: ContractNFTTokenId = farmer.get_ref_mut().sub_nft(seed_id, nft_contract_id, nft_token_id).unwrap();
-        let nft_balance_equivalent: Balance = farmer.get_ref().get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id.clone());
+        let contract_nft_token_id : ContractNFTTokenId = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
+        farmer.get_ref_mut().sub_nft(seed_id, contract_nft_token_id.clone()).unwrap();
+        let nft_balance_equivalent: Balance = get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id.clone()).unwrap();
 
         let farmer_seed_remain = farmer.get_ref_mut().sub_seed(seed_id, nft_balance_equivalent);
 

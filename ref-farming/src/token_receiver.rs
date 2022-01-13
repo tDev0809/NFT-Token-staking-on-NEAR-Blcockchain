@@ -227,7 +227,10 @@ impl NonFungibleTokenReceiver for Contract {
             "Paras(farming): owner_id should be signer_id"
         );
 
-        self.internal_nft_deposit(&msg, &previous_owner_id.to_string(), &nft_contract_id, &token_id);
+        let deposit_res = self.internal_nft_deposit(&msg, &previous_owner_id.to_string(), &nft_contract_id, &token_id);
+        if !deposit_res {
+            panic!("Paras(farming): nft token does not exist on seed");
+        }
         PromiseOrValue::Value(false)
     }
 }
