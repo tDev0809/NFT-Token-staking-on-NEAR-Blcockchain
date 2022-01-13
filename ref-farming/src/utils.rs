@@ -132,11 +132,15 @@ pub fn get_nft_balance_equivalent(
     // split x.paras.near@1:1
     // to "x.paras.near@1", ":1"
     return if let Some(nft_balance) = &seed.nft_balance {
-        let contract_token_series_id_split: Vec<&str> = nft_staked.split(PARAS_SERIES_DELIMETER).collect();
-        if let Some(nft_balance_equivalent) = nft_balance.get(&contract_token_series_id_split[0].to_string()) {
+        if let Some(nft_balance_equivalent) = nft_balance.get(&nft_staked.to_string()) {
             Some(nft_balance_equivalent.0)
         } else {
-            None
+            let contract_token_series_id_split: Vec<&str> = nft_staked.split(PARAS_SERIES_DELIMETER).collect();
+            if let Some(nft_balance_equivalent) = nft_balance.get(&contract_token_series_id_split[0].to_string()) {
+                Some(nft_balance_equivalent.0)
+            } else {
+                None
+            }
         }
     } else {
         None
