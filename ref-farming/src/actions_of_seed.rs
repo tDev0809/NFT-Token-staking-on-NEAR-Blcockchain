@@ -283,12 +283,25 @@ impl Contract {
         // to update user reward_per_seed in each farm
         self.internal_claim_user_reward_by_seed_id(sender_id, seed_id);
 
-        // **** update seed (new version)
         let mut farm_seed = self.get_seed(seed_id);
+
+        let mut farmer = self.get_farmer(sender_id);
+
+        let mut reward_tokens: Vec<AccountId> = vec![];
+        for farm_id in farm_seed.get_ref().farms.iter() {
+            let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
+            if !reward_tokens.contains(&reward_token) {
+                if farmer.get_ref().rewards.get(&reward_token).is_some() {
+                    self.private_withdraw_reward(reward_token.clone(), sender_id.to_string(), None);
+                }
+                reward_tokens.push(reward_token);
+            }
+        };
+
+        // **** update seed (new version)
         farm_seed.get_ref_mut().add_amount(amount);
         self.data_mut().seeds.insert(&seed_id, &farm_seed);
 
-        let mut farmer = self.get_farmer(sender_id);
         farmer.get_ref_mut().add_seed(&seed_id, amount);
         self.data_mut().farmers.insert(sender_id, &farmer);
     }
@@ -336,6 +349,17 @@ impl Contract {
         self.internal_claim_user_reward_by_seed_id(sender_id, seed_id);
 
         let mut farmer = self.get_farmer(sender_id);
+
+        let mut reward_tokens: Vec<AccountId> = vec![];
+        for farm_id in farm_seed.get_ref().farms.iter() {
+            let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
+            if !reward_tokens.contains(&reward_token) {
+                if farmer.get_ref().rewards.get(&reward_token).is_some() {
+                    self.private_withdraw_reward(reward_token.clone(), sender_id.to_string(), None);
+                }
+                reward_tokens.push(reward_token);
+            }
+        };
 
         // update farmer seed
         let contract_nft_token_id = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);

@@ -56,13 +56,21 @@ impl Contract {
     }
 
     #[payable]
-    pub fn claim_reward_by_seed_and_withdraw(&mut self, seed_id: SeedId, token_id: String) {
+    pub fn claim_reward_by_seed_and_withdraw(&mut self, seed_id: SeedId) {
         assert_one_yocto();
         let sender_id = env::predecessor_account_id();
         self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
         self.assert_storage_usage(&sender_id);
 
-        self.internal_withdraw_reward(token_id, None);
+        let seed = self.data().seeds.get(&seed_id).unwrap();
+        let mut reward_tokens: Vec<AccountId> = vec![];
+        for farm_id in seed.get_ref().farms.iter() {
+            let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
+            if !reward_tokens.contains(&reward_token) {
+                self.internal_withdraw_reward(reward_token.clone(), None);
+                reward_tokens.push(reward_token);
+            }
+        };
     }
 
     /// Withdraws given reward token of given user.
