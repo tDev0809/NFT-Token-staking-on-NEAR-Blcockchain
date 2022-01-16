@@ -455,9 +455,9 @@ mod tests {
         let unclaimed = contract.get_unclaimed_reward(accounts(3), farm_id.clone());
         assert_eq!(unclaimed, U128(0));
         let rewarded = contract.get_reward(accounts(0), accounts(2));
-        assert_eq!(rewarded, U128(20000));
+        assert_eq!(rewarded, U128(5000));
         let rewarded = contract.get_reward(accounts(3), accounts(2));
-        assert_eq!(rewarded, U128(15000));
+        assert_eq!(rewarded, U128(10000));
         let farm_info = contract.get_farm(farm_id.clone()).expect("Error");
         assert_eq!(farm_info.cur_round, 10);
         assert_eq!(farm_info.last_round, 10);
@@ -486,9 +486,9 @@ mod tests {
         testing_env!(context.predecessor_account_id(accounts(0))
             .block_timestamp(to_nano(820)).is_view(true).build());
         let rewarded = contract.get_reward(accounts(0), accounts(2));
-        assert_eq!(rewarded, U128(20000));
+        assert_eq!(rewarded, U128(5000));
         let rewarded = contract.get_reward(accounts(3), accounts(2));
-        assert_eq!(rewarded, U128(15000));
+        assert_eq!(rewarded, U128(10000));
         
     }
 
