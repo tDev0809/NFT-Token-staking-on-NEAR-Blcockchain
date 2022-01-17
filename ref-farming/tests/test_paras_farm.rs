@@ -225,7 +225,7 @@ fn single_paras_farm() {
     let unclaim = show_unclaim(&farming, farmer2.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, to_yocto("0.5"));
     let reward = show_reward(&farming, farmer1.account_id(), token1.account_id(), false);
-    assert_eq!(reward.0, to_yocto("3"));
+    assert_eq!(reward.0, to_yocto("0"));
     let user_seeds = show_userseeds(&farming, farmer1.account_id(), false);
     assert_eq!(user_seeds.get(&farm_info.seed_id.clone()).unwrap().0, to_yocto("0.6"));
     println!("<<----- Farmer1 unstake half lpt, now #{}, ts:{}.",
@@ -257,7 +257,7 @@ fn single_paras_farm() {
     let unclaim = show_unclaim(&farming, farmer2.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, to_yocto("0"));
     let reward = show_reward(&farming, farmer2.account_id(), token1.account_id(), false);
-    assert_eq!(reward.0, to_yocto("2.625"));
+    assert_eq!(reward.0, to_yocto("0"));
     let user_seeds = show_userseeds(&farming, farmer2.account_id(), false);
     assert!(user_seeds.get(&farm_info.seed_id.clone()).is_none());
     println!("<<----- Farmer2 unstake all his lpt, now #{}, ts:{}.",
@@ -289,7 +289,7 @@ fn single_paras_farm() {
     let unclaim = show_unclaim(&farming, farmer2.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, to_yocto("0"));
     let reward = show_reward(&farming, farmer1.account_id(), token1.account_id(), false);
-    assert_eq!(reward.0, to_yocto("4.374999999999999999999999"));
+    assert_eq!(reward.0, to_yocto("0"));
     let user_seeds = show_userseeds(&farming, farmer1.account_id(), false);
     assert!(user_seeds.get(&farm_info.seed_id.clone()).is_none());
     println!("<<----- Farmer1 unstake the other half lpt, now #{}, ts:{}.",
