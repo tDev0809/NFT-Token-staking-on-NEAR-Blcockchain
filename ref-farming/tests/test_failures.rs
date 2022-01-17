@@ -668,6 +668,8 @@ fn failure_e25_withdraw_seed_ft() {
     );
     out_come.assert_success();
 
+    let user_seeds = show_userseeds(&farming, farmer1.account_id(), false);
+    assert_eq!(user_seeds.get(&format!("{}", token2.account_id())).unwrap().0, 500);
 
     call!(farmer1, token2.storage_unregister(Some(true)), deposit = 1).assert_success();
 
@@ -677,6 +679,7 @@ fn failure_e25_withdraw_seed_ft() {
         deposit = 1
     );
     out_come.assert_success();
+
     let ex_status = format!("{:?}", out_come.promise_errors()[0].as_ref().unwrap().status());
     assert!(ex_status.contains("The account farmer1 is not registered"));
 

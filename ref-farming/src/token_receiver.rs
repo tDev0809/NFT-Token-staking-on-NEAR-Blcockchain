@@ -32,13 +32,14 @@ impl FungibleTokenReceiver for Contract {
         let sender: AccountId = sender_id.into();
         let amount: u128 = amount.into();
 
-        let msg_parsed = near_sdk::serde_json::from_str(&msg);
-
         if msg.is_empty() {
             // ****** seed Token deposit in ********
 
             // if seed not exist, it will panic
             let seed_farm = self.get_seed(&env::predecessor_account_id());
+
+            assert_eq!(seed_farm.get_ref().seed_type, SeedType::FT, "Cannot deposit FT to this seed");
+
             if amount < seed_farm.get_ref().min_deposit {
                 env::panic(
                     format!(
@@ -56,46 +57,6 @@ impl FungibleTokenReceiver for Contract {
                 amount.into(),
                 SeedType::FT,
             );
-
-            self.assert_storage_usage(&sender);
-
-            env::log(
-                format!(
-                    "{} deposit FT seed {} with amount {}.",
-                    sender,
-                    env::predecessor_account_id(),
-                    amount,
-                )
-                .as_bytes(),
-            );
-            PromiseOrValue::Value(U128(0))
-        } else if msg_parsed.is_ok() {
-            let FarmArgs {
-                transfer_type,
-                seed_id
-            } = msg_parsed.unwrap();
-            assert_eq!(transfer_type, "seed", "transfer_type must be \"seed\"");
-
-            let contract_id: String = env::predecessor_account_id();
-            let seed_contract_id_from_seed_id: String =
-                seed_id.split(FT_INDEX_TAG).next().unwrap().to_string();
-            assert_eq!(
-                contract_id, seed_contract_id_from_seed_id,
-                "seed_id is not the correct ft contract"
-            );
-            let seed_farm = self.get_seed(&seed_id);
-            if amount < seed_farm.get_ref().min_deposit {
-                env::panic(
-                    format!(
-                        "{} {}",
-                        ERR34_BELOW_MIN_SEED_DEPOSITED,
-                        seed_farm.get_ref().min_deposit
-                    )
-                    .as_bytes(),
-                )
-            }
-
-            self.internal_seed_deposit(&seed_id, &sender, amount.into(), SeedType::FT);
 
             self.assert_storage_usage(&sender);
 
@@ -212,6 +173,9 @@ impl MFTTokenReceiver for Contract {
         // if seed not exist, it will panic
         let amount: u128 = amount.into();
         let seed_farm = self.get_seed(&seed_id);
+
+        assert_eq!(seed_farm.get_ref().seed_type, SeedType::MFT, "Cannot deposit MFT to this seed");
+
         if amount < seed_farm.get_ref().min_deposit {
             env::panic(
                 format!(
@@ -263,7 +227,10 @@ impl NonFungibleTokenReceiver for Contract {
             "Paras(farming): owner_id should be signer_id"
         );
 
-        self.internal_nft_deposit(&msg, &previous_owner_id.to_string(), &nft_contract_id, &token_id);
+        let deposit_res = self.internal_nft_deposit(&msg, &previous_owner_id.to_string(), &nft_contract_id, &token_id);
+        if !deposit_res {
+            panic!("Paras(farming): nft token does not exist on seed");
+        }
         PromiseOrValue::Value(false)
     }
 }

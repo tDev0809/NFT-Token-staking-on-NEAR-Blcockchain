@@ -3,11 +3,12 @@ use std::convert::TryInto;
 use near_sdk::json_types::{U128};
 use near_sdk::{AccountId, Balance, PromiseResult};
 
-use crate::utils::{assert_one_yocto, ext_multi_fungible_token, ext_fungible_token, ext_non_fungible_token, ext_self, wrap_mft_token_id, parse_seed_id, GAS_FOR_FT_TRANSFER, GAS_FOR_RESOLVE_TRANSFER, GAS_FOR_NFT_TRANSFER, FT_INDEX_TAG};
+use crate::utils::{assert_one_yocto, ext_multi_fungible_token, ext_fungible_token, ext_non_fungible_token, ext_self, wrap_mft_token_id, parse_seed_id, GAS_FOR_FT_TRANSFER, GAS_FOR_RESOLVE_TRANSFER, GAS_FOR_NFT_TRANSFER, FT_INDEX_TAG, get_nft_balance_equivalent};
 use crate::errors::*;
 use crate::farm_seed::SeedType;
 use crate::*;
 use crate::simple_farm::{NFTTokenId, ContractNFTTokenId};
+use crate::utils::NFT_DELIMETER;
 
 #[near_bindgen]
 impl Contract {
@@ -69,7 +70,10 @@ impl Contract {
                         0,
                         GAS_FOR_RESOLVE_TRANSFER,
                     ));
-            }
+            },
+            SeedType::NFT => {
+                panic!("Use withdraw_nft for this");
+            },
             SeedType::MFT => {
                 let (receiver_id, token_id) = parse_seed_id(&seed_id);
                 ext_multi_fungible_token::mft_transfer(
@@ -123,23 +127,19 @@ impl Contract {
                 let mut farmer = self.get_farmer(&sender_id);
                 let mut farm_seed = self.get_seed(&seed_id);
 
-                //  farmer first
-                let contract_nft_token_id: ContractNFTTokenId = farmer.get_ref_mut().add_nft(&seed_id, &nft_contract_id, &nft_token_id);
+                let contract_nft_token_id : ContractNFTTokenId = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
+                if let Some(nft_balance_equivalent) = get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id.clone()) {
+                    self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
 
-                let amount_before_multiplier: u128 = *farmer.get_ref().seeds_after_multiplier.get(&seed_id).unwrap_or(&0u128);
-                // update multiplier
-                farmer.get_ref_mut().update_farmer_multiplier(farm_seed.get_ref(), contract_nft_token_id, true);
+                    farmer.get_ref_mut().add_nft(&seed_id, contract_nft_token_id);
 
-                let amount_after_multiplier: u128 = farmer.get_ref().calculate_amount_after_multiplier(farm_seed.get_ref());
+                    farmer.get_ref_mut().add_seed(&seed_id, nft_balance_equivalent);
+                    self.data_mut().farmers.insert(&sender_id, &farmer);
 
-                farmer.get_ref_mut().set_seed_after_multiplier(&seed_id, amount_after_multiplier);
-                self.data_mut().farmers.insert(&sender_id, &farmer);
-
-
-                // **** update seed (new version)
-                farm_seed.get_ref_mut().sub_amount(amount_before_multiplier);
-                farm_seed.get_ref_mut().add_amount(amount_after_multiplier);
-                self.data_mut().seeds.insert(&seed_id, &farm_seed);
+                    // **** update seed (new version)
+                    farm_seed.get_ref_mut().add_amount(nft_balance_equivalent);
+                    self.data_mut().seeds.insert(&seed_id, &farm_seed);
+                }
             },
             PromiseResult::Successful(_) => {
                 env::log(
@@ -177,19 +177,13 @@ impl Contract {
                 );
                 // revert withdraw, equal to deposit, claim reward to update user reward_per_seed
                 self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
+                // **** update seed (new version)
                 let mut farm_seed = self.get_seed(&seed_id);
-                let mut farmer = self.get_farmer(&sender_id);
-                farmer.get_ref_mut().add_seed(&seed_id, amount);
-
-                let amount_before_multiplier: u128 = farmer.get_ref().seeds_after_multiplier.get(&seed_id).unwrap_or(&0u128).clone();
-                let amount_after_multiplier: u128 = farmer.get_ref().calculate_amount_after_multiplier(farm_seed.get_ref());
-
-                farm_seed.get_ref_mut().seed_type = SeedType::FT;
-                farm_seed.get_ref_mut().sub_amount(amount_before_multiplier);
-                farm_seed.get_ref_mut().add_amount(amount_after_multiplier);
+                farm_seed.get_ref_mut().add_amount(amount);
                 self.data_mut().seeds.insert(&seed_id, &farm_seed);
 
-                farmer.get_ref_mut().set_seed_after_multiplier(&seed_id, amount_after_multiplier);
+                let mut farmer = self.get_farmer(&sender_id);
+                farmer.get_ref_mut().add_seed(&seed_id, amount);
                 self.data_mut().farmers.insert(&sender_id, &farmer);
             },
             PromiseResult::Successful(_) => {
@@ -229,20 +223,15 @@ impl Contract {
                     .as_bytes(),
                 );
                 // revert withdraw, equal to deposit, claim reward to update user reward_per_seed
+
                 self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
+                // **** update seed (new version)
                 let mut farm_seed = self.get_seed(&seed_id);
-                let mut farmer = self.get_farmer(&sender_id);
-                farmer.get_ref_mut().add_seed(&seed_id, amount);
-
-                let amount_before_multiplier: u128 = farmer.get_ref().seeds_after_multiplier.get(&seed_id).unwrap_or(&0u128).clone();
-                let amount_after_multiplier: u128 = farmer.get_ref().calculate_amount_after_multiplier(farm_seed.get_ref());
-
-                farm_seed.get_ref_mut().seed_type = SeedType::MFT;
-                farm_seed.get_ref_mut().sub_amount(amount_before_multiplier);
-                farm_seed.get_ref_mut().add_amount(amount_after_multiplier);
+                farm_seed.get_ref_mut().add_amount(amount);
                 self.data_mut().seeds.insert(&seed_id, &farm_seed);
 
-                farmer.get_ref_mut().set_seed_after_multiplier(&seed_id, amount_after_multiplier);
+                let mut farmer = self.get_farmer(&sender_id);
+                farmer.get_ref_mut().add_seed(&seed_id, amount);
                 self.data_mut().farmers.insert(&sender_id, &farmer);
             },
             PromiseResult::Successful(_) => {
@@ -292,30 +281,31 @@ impl Contract {
         amount: Balance, 
         seed_type: SeedType) {
 
-        // first claim all reward of the user for this seed farms 
-        // to update user reward_per_seed in each farm 
+        // first claim all reward of the user for this seed farms
+        // to update user reward_per_seed in each farm
         self.internal_claim_user_reward_by_seed_id(sender_id, seed_id);
-        let seed_contract_id: AccountId = seed_id.split(FT_INDEX_TAG).next().unwrap().to_string();
+
+        let mut farm_seed = self.get_seed(seed_id);
 
         let mut farmer = self.get_farmer(sender_id);
 
-        self.private_withdraw_reward(seed_contract_id, sender_id.to_string(), None);
-
         // **** update seed (new version)
-        let mut farm_seed = self.get_seed(seed_id);
-
-        farmer.get_ref_mut().add_seed(&seed_id, amount);
-
-        let amount_before_multiplier: u128 = farmer.get_ref().seeds_after_multiplier.get(seed_id).unwrap_or(&0u128).clone();
-        let amount_after_multiplier: u128 = farmer.get_ref().calculate_amount_after_multiplier(farm_seed.get_ref());
-
-        farm_seed.get_ref_mut().seed_type = seed_type;
-        farm_seed.get_ref_mut().sub_amount(amount_before_multiplier);
-        farm_seed.get_ref_mut().add_amount(amount_after_multiplier);
+        farm_seed.get_ref_mut().add_amount(amount);
         self.data_mut().seeds.insert(&seed_id, &farm_seed);
 
-        farmer.get_ref_mut().set_seed_after_multiplier(&seed_id, amount_after_multiplier);
+        farmer.get_ref_mut().add_seed(&seed_id, amount);
         self.data_mut().farmers.insert(sender_id, &farmer);
+
+        let mut reward_tokens: Vec<AccountId> = vec![];
+        for farm_id in farm_seed.get_ref().farms.iter() {
+            let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
+            if !reward_tokens.contains(&reward_token) {
+                if farmer.get_ref().rewards.get(&reward_token).is_some() {
+                    self.private_withdraw_reward(reward_token.clone(), sender_id.to_string(), None);
+                }
+                reward_tokens.push(reward_token);
+            }
+        };
     }
 
     fn internal_seed_withdraw(
@@ -323,8 +313,8 @@ impl Contract {
         seed_id: &SeedId, 
         sender_id: &AccountId, 
         amount: Balance) -> SeedType {
-        
-        // first claim all reward of the user for this seed farms 
+
+        // first claim all reward of the user for this seed farms
         // to update user reward_per_seed in each farm
         self.internal_claim_user_reward_by_seed_id(sender_id, seed_id);
 
@@ -333,14 +323,7 @@ impl Contract {
 
         // Then update user seed and total seed of this LPT
         let farmer_seed_remain = farmer.get_ref_mut().sub_seed(seed_id, amount);
-
-        let amount_before_multiplier: u128 = *farmer.get_ref().seeds_after_multiplier.get(seed_id).unwrap_or(&0u128);
-        let amount_after_multiplier: u128 = farmer.get_ref().calculate_amount_after_multiplier(farm_seed.get_ref());
-
-        farmer.get_ref_mut().set_seed_after_multiplier(&seed_id, amount_after_multiplier);
-
-        farm_seed.get_ref_mut().sub_amount(amount_before_multiplier);
-        let _seed_remain = farm_seed.get_ref_mut().add_amount(amount_after_multiplier);
+        let _seed_remain = farm_seed.get_ref_mut().sub_amount(amount);
 
         if farmer_seed_remain == 0 {
             // remove farmer rps of relative farm
@@ -350,6 +333,18 @@ impl Contract {
         }
         self.data_mut().farmers.insert(sender_id, &farmer);
         self.data_mut().seeds.insert(seed_id, &farm_seed);
+
+        let mut reward_tokens: Vec<AccountId> = vec![];
+        for farm_id in farm_seed.get_ref().farms.iter() {
+            let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
+            if !reward_tokens.contains(&reward_token) {
+                if farmer.get_ref().rewards.get(&reward_token).is_some() {
+                    self.private_withdraw_reward(reward_token.clone(), sender_id.to_string(), None);
+                }
+                reward_tokens.push(reward_token);
+            }
+        };
+
         farm_seed.get_ref().seed_type.clone()
     }
 
@@ -359,33 +354,42 @@ impl Contract {
         sender_id: &AccountId,
         nft_contract_id: &String,
         nft_token_id: &String,
-    ) {
-
-        // first claim all reward of the user for this seed farms
-        // to update user reward_per_seed in each farm
-        self.internal_claim_user_reward_by_seed_id(sender_id, seed_id);
-
-
-        let mut farmer = self.get_farmer(sender_id);
+    ) -> bool {
         let mut farm_seed = self.get_seed(seed_id);
 
-        //  farmer first
-        let contract_nft_token_id: ContractNFTTokenId = farmer.get_ref_mut().add_nft(seed_id, nft_contract_id, nft_token_id);
+        assert_eq!(farm_seed.get_ref().seed_type, SeedType::NFT, "Cannot deposit NFT to this farm");
 
-        let amount_before_multiplier: u128 = *farmer.get_ref().seeds_after_multiplier.get(seed_id).unwrap_or(&0u128);
-        // update multiplier
-        farmer.get_ref_mut().update_farmer_multiplier(farm_seed.get_ref(), contract_nft_token_id, true);
+        // update farmer seed
+        let contract_nft_token_id = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
+        return if let Some(nft_balance_equivalent) = get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id.clone()) {
+            // first claim all reward of the user for this seed farms
+            // to update user reward_per_seed in each farm
+            self.internal_claim_user_reward_by_seed_id(sender_id, seed_id);
+            let mut farmer = self.get_farmer(sender_id);
+            farmer.get_ref_mut().add_nft(seed_id, contract_nft_token_id);
 
-        let amount_after_multiplier: u128 = farmer.get_ref().calculate_amount_after_multiplier(farm_seed.get_ref());
+            farmer.get_ref_mut().add_seed(seed_id, nft_balance_equivalent);
+            self.data_mut().farmers.insert(sender_id, &farmer);
 
-        farmer.get_ref_mut().set_seed_after_multiplier(&seed_id, amount_after_multiplier);
-        self.data_mut().farmers.insert(sender_id, &farmer);
+            // **** update seed (new version)
+            farm_seed.get_ref_mut().add_amount(nft_balance_equivalent);
+            self.data_mut().seeds.insert(&seed_id, &farm_seed);
 
+            let mut reward_tokens: Vec<AccountId> = vec![];
+            for farm_id in farm_seed.get_ref().farms.iter() {
+                let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
+                if !reward_tokens.contains(&reward_token) {
+                    if farmer.get_ref().rewards.get(&reward_token).is_some() {
+                        self.private_withdraw_reward(reward_token.clone(), sender_id.to_string(), None);
+                    }
+                    reward_tokens.push(reward_token);
+                }
+            };
 
-        // **** update seed (new version)
-        farm_seed.get_ref_mut().sub_amount(amount_before_multiplier);
-        farm_seed.get_ref_mut().add_amount(amount_after_multiplier);
-        self.data_mut().seeds.insert(&seed_id, &farm_seed);
+            true
+        } else {
+            false
+        }
     }
 
     fn internal_nft_withdraw(
@@ -394,29 +398,43 @@ impl Contract {
         sender_id: &AccountId,
         nft_contract_id: &String,
         nft_token_id: &String
-    ) -> String {
+    ) -> ContractNFTTokenId {
         self.internal_claim_user_reward_by_seed_id(sender_id, seed_id);
 
         let mut farm_seed = self.get_seed(seed_id);
         let mut farmer = self.get_farmer(sender_id);
 
         // sub nft
-        let contract_nft_token_id: ContractNFTTokenId = farmer.get_ref_mut().sub_nft(seed_id, nft_contract_id, nft_token_id).unwrap();
+        let contract_nft_token_id : ContractNFTTokenId = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
+        farmer.get_ref_mut().sub_nft(seed_id, contract_nft_token_id.clone()).unwrap();
+        let nft_balance_equivalent: Balance = get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id.clone()).unwrap();
+
+        let farmer_seed_remain = farmer.get_ref_mut().sub_seed(seed_id, nft_balance_equivalent);
 
         // calculate farm_seed after multiplier get removed
-        let amount_before_multiplier: u128 = *farmer.get_ref().seeds_after_multiplier.get(seed_id).unwrap_or(&0u128);
+        farm_seed.get_ref_mut().sub_amount(nft_balance_equivalent);
 
-        // update internal multiplier
-        farmer.get_ref_mut().update_farmer_multiplier(farm_seed.get_ref(), contract_nft_token_id.clone(), false);
-
-        let amount_after_multiplier: u128 = farmer.get_ref().calculate_amount_after_multiplier(farm_seed.get_ref());
-
-        farmer.get_ref_mut().set_seed_after_multiplier(&seed_id, amount_after_multiplier);
-        farm_seed.get_ref_mut().sub_amount(amount_before_multiplier);
-        let _seed_remain = farm_seed.get_ref_mut().add_amount(amount_after_multiplier);
+        if farmer_seed_remain == 0 {
+            // remove farmer rps of relative farm
+            for farm_id in farm_seed.get_ref().farms.iter() {
+                farmer.get_ref_mut().remove_rps(farm_id);
+            }
+        }
 
         self.data_mut().farmers.insert(sender_id, &farmer);
         self.data_mut().seeds.insert(seed_id, &farm_seed);
+
+        let mut reward_tokens: Vec<AccountId> = vec![];
+        for farm_id in farm_seed.get_ref().farms.iter() {
+            let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
+            if !reward_tokens.contains(&reward_token) {
+                if farmer.get_ref().rewards.get(&reward_token).is_some() {
+                    self.private_withdraw_reward(reward_token.clone(), sender_id.to_string(), None);
+                }
+                reward_tokens.push(reward_token);
+            }
+        };
+
         contract_nft_token_id
     }
 

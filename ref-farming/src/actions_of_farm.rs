@@ -6,7 +6,7 @@ use crate::utils::{gen_farm_id, MIN_SEED_DEPOSIT, parse_farm_id};
 use crate::errors::*;
 use crate::*;
 use std::collections::HashMap;
-use crate::farm_seed::FarmSeedMetadata;
+use crate::farm_seed::{FarmSeedMetadata, NFTTokenId};
 
 
 #[near_bindgen]
@@ -17,7 +17,7 @@ impl Contract {
         &mut self,
           terms: HRSimpleFarmTerms,
           min_deposit: Option<U128>,
-          nft_multiplier: Option<HashMap<String, u32>>,
+          nft_balance: Option<HashMap<NFTTokenId, U128>>,
           metadata: Option<FarmSeedMetadata>,
     ) -> FarmId {
         self.assert_owner();
@@ -26,7 +26,7 @@ impl Contract {
 
         let min_deposit: u128 = min_deposit.unwrap_or(U128(MIN_SEED_DEPOSIT)).0;
 
-        let farm_id = self.internal_add_farm(&terms, min_deposit, nft_multiplier, metadata);
+        let farm_id = self.internal_add_farm(&terms, min_deposit, nft_balance, metadata);
 
         // Check how much storage cost and refund the left over back.
         let storage_needed = env::storage_usage() - prev_storage;
@@ -53,7 +53,7 @@ impl Contract {
         &mut self,
         terms: &HRSimpleFarmTerms,
         min_deposit: Balance,
-        nft_multiplier: Option<HashMap<String, u32>>,
+        nft_balance: Option<HashMap<NFTTokenId, U128>>,
         metadata: Option<FarmSeedMetadata>
     ) -> FarmId {
         
@@ -69,7 +69,7 @@ impl Contract {
                 .as_bytes(),
             );
         } else {
-            farm_seed = VersionedFarmSeed::new(&terms.seed_id, min_deposit, nft_multiplier, metadata);
+            farm_seed = VersionedFarmSeed::new(&terms.seed_id, min_deposit, nft_balance, metadata);
             env::log(
                 format!(
                     "The first farm created In seed {}, with min_deposit {}",

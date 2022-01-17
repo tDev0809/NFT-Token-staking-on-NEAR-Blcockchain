@@ -15,7 +15,7 @@ use near_contract_standards::non_fungible_token::metadata::TokenMetadata;
 near_sdk_sim::lazy_static_include::lazy_static_include_bytes! {
     TEST_TOKEN_WASM_BYTES => "../res/test_token.wasm",
     EXCHANGE_WASM_BYTES => "../res/ref_exchange_release.wasm",
-    FARM_WASM_BYTES => "../res/ref_farming_release.wasm",
+    FARM_WASM_BYTES => "../res/ref_farming_local.wasm",
     NFT_WASM_BYTES => "../res/test_nft.wasm"
 }
 

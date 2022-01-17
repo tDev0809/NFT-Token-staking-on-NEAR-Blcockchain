@@ -56,13 +56,21 @@ impl Contract {
     }
 
     #[payable]
-    pub fn claim_reward_by_seed_and_withdraw(&mut self, seed_id: SeedId, token_id: String) {
+    pub fn claim_reward_by_seed_and_withdraw(&mut self, seed_id: SeedId) {
         assert_one_yocto();
         let sender_id = env::predecessor_account_id();
         self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
         self.assert_storage_usage(&sender_id);
 
-        self.internal_withdraw_reward(token_id, None);
+        let seed = self.data().seeds.get(&seed_id).unwrap();
+        let mut reward_tokens: Vec<AccountId> = vec![];
+        for farm_id in seed.get_ref().farms.iter() {
+            let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
+            if !reward_tokens.contains(&reward_token) {
+                self.internal_withdraw_reward(reward_token.clone(), None);
+                reward_tokens.push(reward_token);
+            }
+        };
     }
 
     /// Withdraws given reward token of given user.
@@ -156,7 +164,7 @@ fn claim_user_reward_from_farm(
     total_seeds: &Balance,
     silent: bool,
 ) {
-    let user_seeds = farmer.seeds_after_multiplier.get(&farm.get_seed_id()).unwrap_or(&0_u128);
+    let user_seeds = farmer.seeds.get(&farm.get_seed_id()).unwrap_or(&0_u128);
     let user_rps = farmer.get_rps(&farm.get_farm_id());
     let (new_user_rps, reward_amount) = farm.claim_user_reward(&user_rps, user_seeds, total_seeds, silent);
     if !silent {
