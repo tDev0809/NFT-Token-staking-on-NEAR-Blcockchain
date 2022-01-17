@@ -129,6 +129,8 @@ impl Contract {
 
                 let contract_nft_token_id : ContractNFTTokenId = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
                 if let Some(nft_balance_equivalent) = get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id.clone()) {
+                    self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
+
                     farmer.get_ref_mut().add_nft(&seed_id, contract_nft_token_id);
 
                     farmer.get_ref_mut().add_seed(&seed_id, nft_balance_equivalent);
@@ -331,6 +333,18 @@ impl Contract {
         }
         self.data_mut().farmers.insert(sender_id, &farmer);
         self.data_mut().seeds.insert(seed_id, &farm_seed);
+
+        let mut reward_tokens: Vec<AccountId> = vec![];
+        for farm_id in farm_seed.get_ref().farms.iter() {
+            let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
+            if !reward_tokens.contains(&reward_token) {
+                if farmer.get_ref().rewards.get(&reward_token).is_some() {
+                    self.private_withdraw_reward(reward_token.clone(), sender_id.to_string(), None);
+                }
+                reward_tokens.push(reward_token);
+            }
+        };
+
         farm_seed.get_ref().seed_type.clone()
     }
 
@@ -409,6 +423,18 @@ impl Contract {
 
         self.data_mut().farmers.insert(sender_id, &farmer);
         self.data_mut().seeds.insert(seed_id, &farm_seed);
+
+        let mut reward_tokens: Vec<AccountId> = vec![];
+        for farm_id in farm_seed.get_ref().farms.iter() {
+            let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
+            if !reward_tokens.contains(&reward_token) {
+                if farmer.get_ref().rewards.get(&reward_token).is_some() {
+                    self.private_withdraw_reward(reward_token.clone(), sender_id.to_string(), None);
+                }
+                reward_tokens.push(reward_token);
+            }
+        };
+
         contract_nft_token_id
     }
 
