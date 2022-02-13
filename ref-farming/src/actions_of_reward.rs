@@ -62,12 +62,16 @@ impl Contract {
         self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
         self.assert_storage_usage(&sender_id);
 
+        let farmer = self.get_farmer(&sender_id);
+
         let seed = self.data().seeds.get(&seed_id).unwrap();
         let mut reward_tokens: Vec<AccountId> = vec![];
         for farm_id in seed.get_ref().farms.iter() {
             let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
             if !reward_tokens.contains(&reward_token) {
-                self.internal_withdraw_reward(reward_token.clone(), None);
+                if farmer.get_ref().rewards.get(&reward_token).is_some() {
+                    self.internal_withdraw_reward(reward_token.clone(), None);
+                }
                 reward_tokens.push(reward_token);
             }
         };
