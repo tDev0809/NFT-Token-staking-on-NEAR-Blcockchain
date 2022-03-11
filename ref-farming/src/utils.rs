@@ -139,7 +139,12 @@ pub fn get_nft_balance_equivalent(
             if let Some(nft_balance_equivalent) = nft_balance.get(&contract_token_series_id_split[0].to_string()) {
                 Some(nft_balance_equivalent.0)
             } else {
-                None
+                let contract_token_series_id_split: Vec<&str> = nft_staked.split(NFT_DELIMETER).collect();
+                if let Some(nft_balance_equivalent) = nft_balance.get(&contract_token_series_id_split[0].to_string()) {
+                    Some(nft_balance_equivalent.0)
+                } else {
+                    None
+                }
             }
         } else {
             let contract_token_series_id_split: Vec<&str> = nft_staked.split(NFT_DELIMETER).collect();
