@@ -33,7 +33,15 @@ impl Contract {
             "ERR_NOT_ALLOWED"
         );
         let contract: Contract = env::state_read().expect("ERR_NOT_INITIALIZED");
-        contract
+        return if contract.need_upgrade() {
+            let contract_data_upgraded = contract.upgrade();
+            let this = Contract {
+                data: VersionedContractData::CurrentV2(contract_data_upgraded)
+            };
+            this
+        } else {
+            panic!("Dont need upgrade");
+        };
     }
 
     pub(crate) fn assert_owner(&self) {

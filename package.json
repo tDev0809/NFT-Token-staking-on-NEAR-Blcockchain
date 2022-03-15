@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "jsbi": "^4.2.0",
+    "mocha": "^9.2.1",
+    "near-api-js": "^0.44.2"
+  },
+  "scripts": {
+    "test": "mocha"
+  }
+}

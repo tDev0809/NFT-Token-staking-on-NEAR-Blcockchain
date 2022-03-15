@@ -426,6 +426,7 @@ fn test_farm_with_nft_mappings() {
     nft_balance.insert("nft-contract@1".to_string(), U128(2000000000000000000000000));
     nft_balance.insert("nft-contract@2".to_string(), U128(4000000000000000000000000));
     nft_balance.insert("nft-contract@3".to_string(), U128(6000000000000000000000000));
+    nft_balance.insert("nft-contract".to_string(), U128(6000000000000000000000000));
 
     let out_come = call!(
         owner,
@@ -491,7 +492,7 @@ fn test_farm_with_nft_mappings() {
     );
 
     out_come.assert_success();
-    // println!("{:?}", out_come.promise_results());
+    println!("{:?}", out_come.promise_results());
     println!("<<----- Farmer1 staked nft at #{}, ts:{}.",
              root.borrow_runtime().current_block().block_height,
              root.borrow_runtime().current_block().block_timestamp);
@@ -648,6 +649,28 @@ fn test_farm_with_nft_mappings() {
     assert_eq!(unclaim.0, 833333333333333333333330);
     let unclaim = show_unclaim(&farming, farmer2.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, 166666666666666666666666);
+
+    println!("----->> Farmer1 staking nft 4 which use default contract.");
+
+    let out_come = call!(
+        farmer1,
+        nft_contract.nft_transfer_call(
+            to_va(farming_id()),
+            "4".to_string(),
+            None,
+            None,
+            format!("{}${}", token1.account_id(), "1")
+        ),
+        1,
+        DEFAULT_GAS
+    );
+
+    out_come.assert_success();
+    println!("<<----- Farmer1 staked nft at #{}, ts:{}.",
+             root.borrow_runtime().current_block().block_height,
+             root.borrow_runtime().current_block().block_timestamp);
+    let user_nft_seeds = show_usernftseeds(&farming, farmer1.account_id(), false);
+    println!("farmer1 user_nft_seeds {:?}", user_nft_seeds);
 }
 
 #[test]

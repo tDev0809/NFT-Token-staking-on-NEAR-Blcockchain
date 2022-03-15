@@ -15,7 +15,7 @@ pub struct SeedInfo {
     pub next_index: u32,
     pub amount: U128,
     pub min_deposit: U128,
-    pub nft_multiplier: Option<HashMap<String, u32>>
+    pub nft_balance: Option<HashMap<String, U128>>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

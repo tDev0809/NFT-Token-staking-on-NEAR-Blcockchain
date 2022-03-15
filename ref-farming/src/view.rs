@@ -7,7 +7,7 @@ use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{near_bindgen, AccountId};
 
 use crate::farm_seed::SeedInfo;
-use crate::utils::parse_farm_id;
+use crate::utils::{parse_farm_id, PARAS_SERIES_DELIMETER, NFT_DELIMETER};
 use crate::simple_farm::{DENOM};
 use crate::*;
 
@@ -274,7 +274,10 @@ impl Contract {
 
     pub fn get_seed_info(&self, seed_id: SeedId) -> Option<SeedInfo> {
         if let Some(farm_seed) = self.get_seed_wrapped(&seed_id) {
-            Some(farm_seed.get_ref().into())
+            let mut seed_info: SeedInfo = farm_seed.get_ref().into();
+            let nft_balance_seed = self.data().nft_balance_seeds.get(&seed_id);
+            seed_info.nft_balance = nft_balance_seed;
+            Some(seed_info)
         } else {
             None
         }
@@ -284,9 +287,13 @@ impl Contract {
         let keys = self.data().seeds.keys_as_vector();
         (from_index..std::cmp::min(from_index + limit, keys.len()))
             .map(|index| {
+                let seed_id = keys.get(index).unwrap();
+                let nft_balance_seed = self.data().nft_balance_seeds.get(&seed_id);
+                let mut seed: SeedInfo = self.get_seed(&seed_id).get_ref().into();
+                seed.nft_balance = nft_balance_seed;
                 (
-                    keys.get(index).unwrap(),
-                    self.get_seed(&keys.get(index).unwrap()).get_ref().into(),
+                    seed_id,
+                    seed,
                 )
             })
             .collect()
@@ -299,6 +306,35 @@ impl Contract {
         } else {
             String::from("0")
         }
+    }
+
+    pub fn get_nft_balance_equivalent(&self, seed_id: SeedId, nft_token_id: String) -> Option<U128> {
+        let nft_balance = self.data().nft_balance_seeds.get(&seed_id).unwrap();
+        let mut result: Option<U128> = None;
+
+        if let Some(nft_balance_equivalent) = nft_balance.get(&nft_token_id.to_string()) {
+            result = Some(*nft_balance_equivalent);
+        } else if nft_token_id.contains(PARAS_SERIES_DELIMETER) {
+            let contract_token_series_id_split: Vec<&str> = nft_token_id.split(PARAS_SERIES_DELIMETER).collect();
+            if let Some(nft_balance_equivalent) = nft_balance.get(&contract_token_series_id_split[0].to_string()) {
+                result = Some(*nft_balance_equivalent);
+            } else {
+                let contract_token_series_id_split: Vec<&str> = nft_token_id.split(NFT_DELIMETER).collect();
+                if let Some(nft_balance_equivalent) = nft_balance.get(&contract_token_series_id_split[0].to_string()) {
+                    result = Some(*nft_balance_equivalent);
+                } else {
+                    result = None;
+                }
+            }
+        } else {
+            let contract_token_series_id_split: Vec<&str> = nft_token_id.split(NFT_DELIMETER).collect();
+            if let Some(nft_balance_equivalent) = nft_balance.get(&contract_token_series_id_split[0].to_string()) {
+                result = Some(*nft_balance_equivalent);
+            } else {
+                result = None;
+            }
+        }
+        return result;
     }
 
 

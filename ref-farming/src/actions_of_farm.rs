@@ -69,7 +69,12 @@ impl Contract {
                 .as_bytes(),
             );
         } else {
-            farm_seed = VersionedFarmSeed::new(&terms.seed_id, min_deposit, nft_balance, metadata);
+            if let Some(nft_balance) = nft_balance {
+                farm_seed = VersionedFarmSeed::new(&terms.seed_id, min_deposit, true, metadata);
+                self.data_mut().nft_balance_seeds.insert(&terms.seed_id, &nft_balance);
+            } else {
+                farm_seed = VersionedFarmSeed::new(&terms.seed_id, min_deposit, false, metadata);
+            }
             env::log(
                 format!(
                     "The first farm created In seed {}, with min_deposit {}",

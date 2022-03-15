@@ -9,9 +9,16 @@ use crate::farm_seed::SeedType;
 use crate::*;
 use crate::simple_farm::{NFTTokenId, ContractNFTTokenId};
 use crate::utils::NFT_DELIMETER;
+use std::collections::HashMap;
 
 #[near_bindgen]
 impl Contract {
+
+    pub fn force_upgrade_seed(&mut self, seed_id: SeedId) {
+        self.assert_owner();
+        let seed = self.get_seed_and_upgrade(&seed_id);
+        self.data_mut().seeds.insert(&seed_id, &seed);
+    }
 
     #[payable]
     pub fn withdraw_nft(&mut self, seed_id: SeedId, nft_contract_id: String, nft_token_id: NFTTokenId) {
@@ -128,7 +135,8 @@ impl Contract {
                 let mut farm_seed = self.get_seed(&seed_id);
 
                 let contract_nft_token_id : ContractNFTTokenId = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
-                if let Some(nft_balance_equivalent) = get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id.clone()) {
+                let nft_balance = self.data().nft_balance_seeds.get(&seed_id).unwrap();
+                if let Some(nft_balance_equivalent) = get_nft_balance_equivalent(nft_balance, contract_nft_token_id.clone()) {
                     self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
 
                     farmer.get_ref_mut().add_nft(&seed_id, contract_nft_token_id);
@@ -252,10 +260,20 @@ impl Contract {
 impl Contract {
 
     #[inline]
+    pub(crate) fn get_seed_and_upgrade(&mut self, seed_id: &String) -> VersionedFarmSeed {
+        let orig = self.data().seeds.get(seed_id).expect(&format!("{}", ERR31_SEED_NOT_EXIST));
+        if orig.need_upgrade() {
+            orig.upgrade(self)
+        } else {
+            orig
+        }
+    }
+
+    #[inline]
     pub(crate) fn get_seed(&self, seed_id: &String) -> VersionedFarmSeed {
         let orig = self.data().seeds.get(seed_id).expect(&format!("{}", ERR31_SEED_NOT_EXIST));
         if orig.need_upgrade() {
-            orig.upgrade()
+            panic!("Need upgrade");
         } else {
             orig
         } 
@@ -265,7 +283,7 @@ impl Contract {
     pub(crate) fn get_seed_wrapped(&self, seed_id: &String) -> Option<VersionedFarmSeed> {
         if let Some(farm_seed) = self.data().seeds.get(seed_id) {
             if farm_seed.need_upgrade() {
-                Some(farm_seed.upgrade())
+                panic!("Need upgrade");
             } else {
                 Some(farm_seed)
             }
@@ -361,7 +379,8 @@ impl Contract {
 
         // update farmer seed
         let contract_nft_token_id = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
-        return if let Some(nft_balance_equivalent) = get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id.clone()) {
+        let nft_balance = self.data().nft_balance_seeds.get(&seed_id).unwrap();
+        return if let Some(nft_balance_equivalent) = get_nft_balance_equivalent(nft_balance, contract_nft_token_id.clone()) {
             // first claim all reward of the user for this seed farms
             // to update user reward_per_seed in each farm
             self.internal_claim_user_reward_by_seed_id(sender_id, seed_id);
@@ -407,7 +426,8 @@ impl Contract {
         // sub nft
         let contract_nft_token_id : ContractNFTTokenId = format!("{}{}{}", nft_contract_id, NFT_DELIMETER, nft_token_id);
         farmer.get_ref_mut().sub_nft(seed_id, contract_nft_token_id.clone()).unwrap();
-        let nft_balance_equivalent: Balance = get_nft_balance_equivalent(farm_seed.get_ref(), contract_nft_token_id.clone()).unwrap();
+        let nft_balance = self.data().nft_balance_seeds.get(&seed_id).unwrap();
+        let nft_balance_equivalent: Balance = get_nft_balance_equivalent(nft_balance, contract_nft_token_id.clone()).unwrap();
 
         let farmer_seed_remain = farmer.get_ref_mut().sub_seed(seed_id, nft_balance_equivalent);
 
