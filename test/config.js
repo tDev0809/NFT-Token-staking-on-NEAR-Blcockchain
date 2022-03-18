@@ -1,4 +1,4 @@
-const farmingContractName = 'dev-1647362979413-97800413137111'
+const farmingContractName = 'dev-1647599503667-53369781664552'
 const nftContractName = 'paras-token-v1.testnet'
 const ftContractName = 'dev-1631277489384-75412609538902'
 const ownerAccountName = 'orang.testnet'

@@ -59,6 +59,13 @@ describe('NFT Farming Contract', function () {
 
 			await farmingContract.force_upgrade_seed({
                 args: {
+                    seed_id: `${nftContractName}`
+                },
+                gas: gas_max
+            })
+
+			await farmingContract.force_upgrade_seed({
+                args: {
                     seed_id: `${nftContractName}-7777`
                 },
                 gas: gas_max
@@ -272,7 +279,7 @@ describe('NFT Farming Contract', function () {
 
     it('should nft stake with gas_max', async function () {
         try {
-            const token_id = "251:42"
+            const token_id = "251:46"
             const seed_id = `${nftContractName}-7777`
 
             const user_nft_seeds = await farmingContract.list_user_nft_seeds({
@@ -302,7 +309,7 @@ describe('NFT Farming Contract', function () {
 
     it('should nft unstake with gas_max', async function () {
         try {
-            const token_id = "251:42"
+            const token_id = "251:46"
             const contractTokenId = `${nftContractName}@${token_id}`
             const seed_id = `${nftContractName}-7777`
 
@@ -333,7 +340,7 @@ describe('NFT Farming Contract', function () {
 
     it('should nft stake', async function () {
         try {
-            const token_id = "251:42"
+            const token_id = "251:46"
             const seed_id = `${nftContractName}-7777`
 
             const user_nft_seeds = await farmingContract.list_user_nft_seeds({
@@ -363,7 +370,7 @@ describe('NFT Farming Contract', function () {
 
     it('should nft unstake', async function () {
         try {
-            const token_id = "251:42"
+            const token_id = "251:46"
             const contractTokenId = `${nftContractName}@${token_id}`
             const seed_id = `${nftContractName}-7777`
 

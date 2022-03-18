@@ -129,15 +129,11 @@ impl Contract {
             }),
         }
     }
-
-    pub fn migrate_contract(&mut self) {
-        self.data();
-    }
 }
 
 impl Contract {
 
-    pub fn upgrade(self) -> ContractData {
+    fn upgrade(self) -> ContractData {
         match self.data {
             VersionedContractData::CurrentV2(data) => data,
             VersionedContractData::Current(data) => {
