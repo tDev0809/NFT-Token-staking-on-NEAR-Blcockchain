@@ -331,7 +331,6 @@ impl Contract {
         seed_id: &String,
         sender_id: &AccountId,
         is_deposit_seed_reward: bool,
-        reward_tokens: Option<Vec<AccountId>>
     ) {
 
         let mut farm_seed = self.get_seed(seed_id);
@@ -354,11 +353,7 @@ impl Contract {
         farmer.get_ref_mut().add_seed(&seed_id, amount);
         self.data_mut().farmers.insert(sender_id, &farmer);
 
-        let mut reward_tokens: Vec<AccountId> = if let Some(reward_tokens) = reward_tokens {
-            reward_tokens
-        } else {
-            vec![]
-        };
+        let mut reward_tokens: Vec<AccountId> = vec![];
 
         for farm_id in farm_seed.get_ref().farms.iter() {
             let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
