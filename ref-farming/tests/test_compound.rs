@@ -118,7 +118,7 @@ fn compound_single_paras_farm() {
     let unclaim = show_unclaim(&farming, farmer1.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, to_yocto("2"));
 
-    println!("----->> move to 60 secs later and farmer1 claim reward by farm_id.");
+    println!("----->> move to 60 secs later and farmer1 claim and deposit reward by seed_id.");
     assert!(root.borrow_runtime_mut().produce_blocks(60).is_ok());
     println!("        Chain goes 60 blocks, now #{}, ts:{}.",
              root.borrow_runtime().current_block().block_height,
@@ -129,7 +129,7 @@ fn compound_single_paras_farm() {
     assert_eq!(unclaim.0, to_yocto("3"));
     let out_come = call!(
         farmer1,
-        farming.claim_reward_by_farm(farm_id.clone()),
+        farming.claim_reward_by_seed_and_deposit(token1.account_id(), token1.account_id(), true),
         deposit = 0
     );
     out_come.assert_success();
@@ -139,13 +139,14 @@ fn compound_single_paras_farm() {
     let unclaim = show_unclaim(&farming, farmer1.account_id(), farm_id.clone(), false);
     assert_eq!(unclaim.0, 0_u128);
     let reward = show_reward(&farming, farmer1.account_id(), token1.account_id(), false);
-    assert_eq!(reward.0, to_yocto("3"));
-    println!("<<----- Farmer1 claimed reward by farmid, now #{}, ts:{}.",
+    assert_eq!(reward.0, to_yocto("0"));
+    println!("<<----- Farmer1 claim and deposit reward by seed, now #{}, ts:{}.",
              root.borrow_runtime().current_block().block_height,
              root.borrow_runtime().current_block().block_timestamp);
 
     let farm_info = show_farminfo(&farming, farm_id.clone(), false);
     assert_farming(&farm_info, "Running".to_string(), to_yocto("10"), 3, 3, to_yocto("3"), to_yocto("0"), 0);
     let unclaim = show_unclaim(&farming, farmer1.account_id(), farm_id.clone(), false);
-    assert_eq!(unclaim.0, to_yocto("0"));
+    let deposited_amount: HashMap<String, U128> = show_userseeds(&farming, farmer1.account_id, false);
+    assert_eq!(deposited_amount.get(token1.account_id().as_str()).unwrap(), &U128(to_yocto("4")));
 }
