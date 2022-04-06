@@ -45,7 +45,9 @@ impl Contract {
         self.assert_storage_usage(&sender_id);
     }
 
+    #[payable]
     pub fn claim_reward_by_seed_and_deposit(&mut self, seed_id: SeedId, seed_id_deposit: SeedId, is_deposit_seed_reward: bool) {
+        assert_one_yocto();
         let sender_id = env::predecessor_account_id();
         // only claim active farm with seed_id_deposit as its reward
 
@@ -63,7 +65,9 @@ impl Contract {
         self.internal_seed_redeposit(&seed_id_deposit, &sender_id, is_deposit_seed_reward);
     }
 
+    #[payable]
     pub fn claim_reward_by_all_seed_and_deposit(&mut self, seed_id_deposit: SeedId) {
+        assert_one_yocto();
         let sender_id = env::predecessor_account_id();
         let farmer = self.get_farmer(&sender_id);
         for (seed_id, _) in farmer.get_ref().seeds.iter() {
