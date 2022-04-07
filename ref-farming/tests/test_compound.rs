@@ -130,7 +130,7 @@ fn compound_single_paras_farm() {
     let out_come = call!(
         farmer1,
         farming.claim_reward_by_seed_and_deposit(token1.account_id(), token1.account_id(), true),
-        deposit = 0
+        deposit = 1
     );
     out_come.assert_success();
 
@@ -162,7 +162,7 @@ fn compound_single_paras_farm() {
     let out_come = call!(
         farmer1,
         farming.claim_reward_by_all_seed_and_deposit(token1.account_id()),
-        deposit = 0
+        deposit = 1
     );
     out_come.assert_success();
 
