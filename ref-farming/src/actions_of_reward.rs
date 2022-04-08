@@ -7,6 +7,7 @@ use crate::utils::{ext_fungible_token, ext_self, GAS_FOR_FT_TRANSFER, GAS_FOR_RE
 use crate::errors::*;
 use crate::*;
 use uint::construct_uint;
+use crate::token_receiver::TokenId;
 
 construct_uint! {
     /// 256-bit unsigned integer.
@@ -42,6 +43,45 @@ impl Contract {
         let sender_id = env::predecessor_account_id();
         self.internal_claim_user_reward_by_seed_id(&sender_id, &seed_id);
         self.assert_storage_usage(&sender_id);
+    }
+
+    #[payable]
+    pub fn claim_reward_by_seed_and_deposit(&mut self, seed_id: SeedId, seed_id_deposit: SeedId, is_deposit_seed_reward: bool) {
+        assert_one_yocto();
+        let sender_id = env::predecessor_account_id();
+        // only claim active farm with seed_id_deposit as its reward
+
+        let seed = self.get_seed(&seed_id);
+
+        for farm_id in seed.get_ref().farms.iter() {
+            let farm = self.get_farm(farm_id.to_string()).unwrap();
+            if farm.farm_status == "Running" && farm.reward_token == seed_id_deposit {
+                self.internal_claim_user_reward_by_farm_id(&sender_id, farm_id);
+            }
+        }
+
+        self.assert_storage_usage(&sender_id);
+
+        self.internal_seed_redeposit(&seed_id_deposit, &sender_id, is_deposit_seed_reward);
+    }
+
+    #[payable]
+    pub fn claim_reward_by_all_seed_and_deposit(&mut self, seed_id_deposit: SeedId) {
+        assert_one_yocto();
+        let sender_id = env::predecessor_account_id();
+        let farmer = self.get_farmer(&sender_id);
+        for (seed_id, _) in farmer.get_ref().seeds.iter() {
+            let seed = self.get_seed(&seed_id);
+            for farm_id in seed.get_ref().farms.iter() {
+                let farm = self.get_farm(farm_id.to_string()).unwrap();
+                if farm.farm_status == "Running" && farm.reward_token == seed_id_deposit {
+                    self.internal_claim_user_reward_by_farm_id(&sender_id, &farm_id);
+                }
+            }
+        }
+        self.assert_storage_usage(&sender_id);
+
+        self.internal_seed_redeposit(&seed_id_deposit, &sender_id, true);
     }
 
     #[payable]
@@ -103,22 +143,24 @@ impl Contract {
         // Note: subtraction, will be reverted if the promise fails.
         let amount = farmer.get_ref_mut().sub_reward(&token_id, amount);
         self.data_mut().farmers.insert(&sender_id, &farmer);
-        ext_fungible_token::ft_transfer(
-            sender_id.clone().try_into().unwrap(),
-            amount.into(),
-            None,
-            &token_id,
-            1,
-            GAS_FOR_FT_TRANSFER,
-        )
-            .then(ext_self::callback_post_withdraw_reward(
-                token_id,
-                sender_id,
+        if amount != 0 {
+            ext_fungible_token::ft_transfer(
+                sender_id.clone().try_into().unwrap(),
                 amount.into(),
-                &env::current_account_id(),
-                0,
-                GAS_FOR_RESOLVE_TRANSFER,
-            ));
+                None,
+                &token_id,
+                1,
+                GAS_FOR_FT_TRANSFER,
+            )
+                .then(ext_self::callback_post_withdraw_reward(
+                    token_id,
+                    sender_id,
+                    amount.into(),
+                    &env::current_account_id(),
+                    0,
+                    GAS_FOR_RESOLVE_TRANSFER,
+                ));
+        }
     }
 
     #[private]

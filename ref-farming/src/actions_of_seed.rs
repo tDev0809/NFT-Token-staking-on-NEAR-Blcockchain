@@ -326,6 +326,46 @@ impl Contract {
         };
     }
 
+    pub(crate) fn internal_seed_redeposit(
+        &mut self,
+        seed_id: &String,
+        sender_id: &AccountId,
+        is_deposit_seed_reward: bool,
+    ) {
+
+        let mut farm_seed = self.get_seed(seed_id);
+        let mut farmer = self.get_farmer(sender_id);
+
+        let amount = if is_deposit_seed_reward {
+            self.internal_claim_user_reward_by_seed_id(&sender_id, seed_id);
+            farmer = self.get_farmer(sender_id);
+            farmer.get_ref_mut().sub_reward(&seed_id, 0)
+        } else {
+            let amount = farmer.get_ref_mut().sub_reward(&seed_id, 0);
+            self.internal_claim_user_reward_by_seed_id(&sender_id, seed_id);
+            amount
+        };
+
+        // **** update seed (new version)
+        farm_seed.get_ref_mut().add_amount(amount);
+        self.data_mut().seeds.insert(&seed_id, &farm_seed);
+
+        farmer.get_ref_mut().add_seed(&seed_id, amount);
+        self.data_mut().farmers.insert(sender_id, &farmer);
+
+        let mut reward_tokens: Vec<AccountId> = vec![];
+
+        for farm_id in farm_seed.get_ref().farms.iter() {
+            let reward_token = self.data().farms.get(farm_id).unwrap().get_reward_token();
+            if !reward_tokens.contains(&reward_token) {
+                if farmer.get_ref().rewards.get(&reward_token).is_some() {
+                    self.private_withdraw_reward(reward_token.clone(), sender_id.to_string(), None);
+                }
+                reward_tokens.push(reward_token);
+            }
+        };
+    }
+
     fn internal_seed_withdraw(
         &mut self, 
         seed_id: &SeedId, 
