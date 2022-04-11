@@ -332,18 +332,15 @@ impl Contract {
         sender_id: &AccountId,
         is_deposit_seed_reward: bool,
     ) {
+        self.internal_claim_user_reward_by_seed_id(&sender_id, seed_id);
 
         let mut farm_seed = self.get_seed(seed_id);
         let mut farmer = self.get_farmer(sender_id);
 
-        let amount = if is_deposit_seed_reward {
-            self.internal_claim_user_reward_by_seed_id(&sender_id, seed_id);
-            farmer = self.get_farmer(sender_id);
+        let amount = if farmer.get_ref().rewards.get(seed_id).is_some() {
             farmer.get_ref_mut().sub_reward(&seed_id, 0)
         } else {
-            let amount = farmer.get_ref_mut().sub_reward(&seed_id, 0);
-            self.internal_claim_user_reward_by_seed_id(&sender_id, seed_id);
-            amount
+            0
         };
 
         // **** update seed (new version)
