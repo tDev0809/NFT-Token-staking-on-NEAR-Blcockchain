@@ -55,7 +55,7 @@ impl Contract {
 
         for farm_id in seed.get_ref().farms.iter() {
             let farm = self.get_farm(farm_id.to_string()).unwrap();
-            if farm.farm_status == "Running" && farm.reward_token == seed_id_deposit {
+            if farm.reward_token == seed_id_deposit {
                 self.internal_claim_user_reward_by_farm_id(&sender_id, farm_id);
             }
         }
