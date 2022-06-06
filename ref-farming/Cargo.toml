@@ -1,5 +1,5 @@
 [package]
-name = "ref_farming"
+name = "ref-farming"
 version = "1.0.1"
 authors = ["Marco Sun <sun.dsk1@gmail.com>"]
 edition = "2018"
